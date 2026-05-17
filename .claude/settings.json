@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"/home/lucas-pierre/Documentos/imobiliaria backend/config\" \"/home/lucas-pierre/Documentos/imobiliaria backend/classes\" \"/home/lucas-pierre/Documentos/imobiliaria backend/includes\" \"/home/lucas-pierre/Documentos/imobiliaria backend/imoveis\" \"/home/lucas-pierre/Documentos/imobiliaria backend/clientes\" \"/home/lucas-pierre/Documentos/imobiliaria backend/contratos\")",
+      "Bash(php --version)",
+      "Bash(psql --version)",
+      "Bash(php -m)",
+      "Bash(psql 'postgresql://neondb_owner:npg_hS4uN5edvTZF@ep-holy-rice-aqec5nil-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require' -c \"ALTER TABLE imoveis ADD COLUMN IF NOT EXISTS foto VARCHAR\\(255\\);\")"
+    ],
+    "additionalDirectories": [
+      "/home/lucas-pierre/Documentos/imobiliaria backend"
+    ]
+  }
+}
