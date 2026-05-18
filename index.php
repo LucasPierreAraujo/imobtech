@@ -66,7 +66,7 @@ $resultado = $dao->listarComCliente();
         <div class="col-md-4">
             <div class="card">
                 <?php if ($row['foto']): ?>
-                <img src="uploads/<?= htmlspecialchars($row['foto']) ?>" class="card-img-top" style="height:180px;object-fit:cover;">
+                <img src="<?= $row['foto'] ?>" class="card-img-top" style="height:180px;object-fit:cover;">
                 <?php endif; ?>
                 <div class="card-body">
                     <span class="badge bg-secondary badge-tipo"><?= ucfirst($row['tipo']) ?></span>

@@ -46,7 +46,7 @@ $resultado = $dao->listarComCliente();
                     <td><?= $row['id'] ?></td>
                     <td>
                         <?php if ($row['foto']): ?>
-                        <img src="../uploads/<?= htmlspecialchars($row['foto']) ?>" style="height:45px;width:65px;object-fit:cover;border-radius:4px;">
+                        <img src="<?= $row['foto'] ?>" style="height:45px;width:65px;object-fit:cover;border-radius:4px;">
                         <?php else: ?>
                         <span class="text-muted">-</span>
                         <?php endif; ?>

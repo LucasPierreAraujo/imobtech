@@ -30,14 +30,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $imovel->foto       = $dados['foto'];
 
     if (isset($_FILES['foto']) && $_FILES['foto']['error'] === 0) {
-        $imagemInfo = @getimagesize($_FILES['foto']['tmp_name']);
+        $imagemInfo      = @getimagesize($_FILES['foto']['tmp_name']);
         $mimesPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
         if ($imagemInfo && in_array($imagemInfo['mime'], $mimesPermitidos)) {
-            $extensoes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-            $ext  = $extensoes[$imagemInfo['mime']];
-            $nome = uniqid('imovel_') . '.' . $ext;
-            move_uploaded_file($_FILES['foto']['tmp_name'], __DIR__ . '/../uploads/' . $nome);
-            $imovel->foto = $nome;
+            $dados        = file_get_contents($_FILES['foto']['tmp_name']);
+            $imovel->foto = 'data:' . $imagemInfo['mime'] . ';base64,' . base64_encode($dados);
         } else {
             $erro = 'Arquivo inválido. Envie apenas imagens JPG, PNG ou WEBP.';
         }
@@ -135,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <div class="col-md-6 mb-3">
                     <label>Foto do imóvel</label>
                     <?php if ($dados['foto']): ?>
-                        <div class="mb-2"><img src="../uploads/<?= htmlspecialchars($dados['foto']) ?>" style="height:80px;border-radius:6px;"></div>
+                        <div class="mb-2"><img src="<?= $dados['foto'] ?>" style="height:80px;border-radius:6px;"></div>
                     <?php endif; ?>
                     <input type="file" name="foto" class="form-control" accept="image/jpeg,image/png,image/webp">
                     <small class="text-muted">Deixe em branco para manter a foto atual</small>
