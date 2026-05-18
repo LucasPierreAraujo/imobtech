@@ -9,26 +9,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../classes/Imovel.php';
+require_once __DIR__ . '/../classes/ImovelDAO.php';
 
 autenticarApi();
 
-$db = new Database();
-$conn = $db->conectar();
-$imovel = new Imovel($conn);
+$db  = new Database();
+$dao = new ImovelDAO($db->conectar());
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $stmt = $imovel->listarComCliente();
+    $stmt  = $dao->listarComCliente();
     $lista = $stmt->fetchAll(PDO::FETCH_ASSOC);
     respostaJson($lista);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $body = json_decode(file_get_contents('php://input'), true);
+    if (!$body) respostaJson(['erro' => 'Dados inválidos.'], 400);
 
-    if (!$body) {
-        respostaJson(['erro' => 'Dados inválidos.'], 400);
-    }
-
+    $imovel             = new Imovel();
     $imovel->tipo       = $body['tipo'] ?? '';
     $imovel->finalidade = $body['finalidade'] ?? '';
     $imovel->titulo     = $body['titulo'] ?? '';
@@ -40,10 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $imovel->vagas      = $body['vagas'] ?? 0;
     $imovel->cidade     = $body['cidade'] ?? '';
     $imovel->bairro     = $body['bairro'] ?? '';
-    $imovel->status     = 'disponivel';
     $imovel->foto       = null;
 
-    if ($imovel->criar()) {
+    if ($dao->criar($imovel)) {
         respostaJson(['mensagem' => 'Imóvel cadastrado com sucesso.'], 201);
     } else {
         respostaJson(['erro' => 'Dados inválidos ou tipo/finalidade incorretos.'], 400);

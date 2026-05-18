@@ -1,35 +1,36 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../classes/Contrato.php';
 require_once __DIR__ . '/../classes/Imovel.php';
+require_once __DIR__ . '/../classes/ImovelDAO.php';
 require_once __DIR__ . '/../classes/Cliente.php';
+require_once __DIR__ . '/../classes/ClienteDAO.php';
+require_once __DIR__ . '/../classes/Contrato.php';
+require_once __DIR__ . '/../classes/ContratoDAO.php';
 
-$db = new Database();
-$conn = $db->conectar();
+$db          = new Database();
+$conn        = $db->conectar();
+$imovelDAO   = new ImovelDAO($conn);
+$clienteDAO  = new ClienteDAO($conn);
+$contratoDAO = new ContratoDAO($conn);
 
-$contrato = new Contrato($conn);
-$imovel = new Imovel($conn);
-$cliente = new Cliente($conn);
-
-$imoveis = $imovel->listar();
-$clientes = $cliente->listar();
-
-$erro = '';
+$imoveis  = $imovelDAO->listar();
+$clientes = $clienteDAO->listar();
+$erro     = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $contrato->imovel_id = $_POST['imovel_id'];
-    $contrato->cliente_id = $_POST['cliente_id'];
-    $contrato->tipo = $_POST['tipo'];
+    $contrato              = new Contrato();
+    $contrato->imovel_id   = $_POST['imovel_id'];
+    $contrato->cliente_id  = $_POST['cliente_id'];
+    $contrato->tipo        = $_POST['tipo'];
     $contrato->valor_total = $_POST['valor_total'];
-    $contrato->parcelas = $_POST['parcelas'];
+    $contrato->parcelas    = $_POST['parcelas'];
     $contrato->data_inicio = $_POST['data_inicio'];
-    $contrato->data_fim = $_POST['data_fim'];
+    $contrato->data_fim    = $_POST['data_fim'];
 
-    if ($contrato->criar()) {
-        $imovel->id = $_POST['imovel_id'];
-        $imovel->status = $_POST['tipo'] === 'aluguel' ? 'alugado' : 'vendido';
-        $imovel->atualizarStatus();
+    if ($contratoDAO->criar($contrato)) {
+        $novoStatus = $_POST['tipo'] === 'aluguel' ? 'alugado' : 'vendido';
+        $imovelDAO->atualizarStatus($_POST['imovel_id'], $novoStatus);
         header('Location: index.php?msg=Contrato cadastrado com sucesso!');
         exit;
     } else {

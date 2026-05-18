@@ -2,11 +2,11 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../classes/Imovel.php';
+require_once __DIR__ . '/../classes/ImovelDAO.php';
 
-$db = new Database();
-$conn = $db->conectar();
-$imovel = new Imovel($conn);
-$resultado = $imovel->listarComCliente();
+$db  = new Database();
+$dao = new ImovelDAO($db->conectar());
+$resultado = $dao->listarComCliente();
 ?>
 <?php include __DIR__ . '/../includes/header.php'; ?>
 
@@ -37,6 +37,11 @@ $resultado = $imovel->listarComCliente();
             </thead>
             <tbody>
                 <?php while ($row = $resultado->fetch(PDO::FETCH_ASSOC)): ?>
+                <?php
+                    $cores = ['disponivel' => 'success', 'vendido' => 'danger', 'alugado' => 'warning'];
+                    $cor = $cores[$row['status']] ?? 'secondary';
+                    $primeiroNome = $row['cliente_nome'] ? htmlspecialchars(explode(' ', $row['cliente_nome'])[0]) : '';
+                ?>
                 <tr>
                     <td><?= $row['id'] ?></td>
                     <td>
@@ -52,11 +57,6 @@ $resultado = $imovel->listarComCliente();
                     <td><?= htmlspecialchars($row['cidade']) ?></td>
                     <td>R$ <?= number_format($row['valor'], 2, ',', '.') ?></td>
                     <td>
-                        <?php
-                        $cores = ['disponivel' => 'success', 'vendido' => 'danger', 'alugado' => 'warning'];
-                        $cor = $cores[$row['status']] ?? 'secondary';
-                        $primeiroNome = $row['cliente_nome'] ? htmlspecialchars(explode(' ', $row['cliente_nome'])[0]) : '';
-                        ?>
                         <span class="badge bg-<?= $cor ?>">
                             <?= ucfirst($row['status']) ?>
                             <?php if ($primeiroNome && $row['status'] !== 'disponivel'): ?>

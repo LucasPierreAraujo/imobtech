@@ -2,20 +2,20 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../classes/Cliente.php';
+require_once __DIR__ . '/../classes/ClienteDAO.php';
 
-$db = new Database();
-$conn = $db->conectar();
-$cliente = new Cliente($conn);
-
+$db  = new Database();
+$dao = new ClienteDAO($db->conectar());
 $erro = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $cliente->nome = $_POST['nome'];
-    $cliente->cpf = $_POST['cpf'];
-    $cliente->email = $_POST['email'];
+    $cliente           = new Cliente();
+    $cliente->nome     = $_POST['nome'];
+    $cliente->cpf      = $_POST['cpf'];
+    $cliente->email    = $_POST['email'];
     $cliente->telefone = $_POST['telefone'];
 
-    if ($cliente->criar()) {
+    if ($dao->criar($cliente)) {
         header('Location: index.php?msg=Cliente cadastrado com sucesso!');
         exit;
     } else {

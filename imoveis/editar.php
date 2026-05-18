@@ -2,43 +2,39 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../classes/Imovel.php';
+require_once __DIR__ . '/../classes/ImovelDAO.php';
 
-$db = new Database();
-$conn = $db->conectar();
-$imovel = new Imovel($conn);
+$db  = new Database();
+$dao = new ImovelDAO($db->conectar());
 
-$imovel->id = (int)($_GET['id'] ?? 0);
-$dados = $imovel->buscarPorId();
-
-if (!$dados) {
-    header('Location: index.php');
-    exit;
-}
+$dados = $dao->buscarPorId((int)($_GET['id'] ?? 0));
+if (!$dados) { header('Location: index.php'); exit; }
 
 $erro = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $imovel->id = (int)$_POST['id'];
-    $imovel->tipo = $_POST['tipo'];
+    $imovel             = new Imovel();
+    $imovel->id         = (int)$_POST['id'];
+    $imovel->tipo       = $_POST['tipo'];
     $imovel->finalidade = $_POST['finalidade'];
-    $imovel->titulo = $_POST['titulo'];
-    $imovel->descricao = $_POST['descricao'];
-    $imovel->valor = $_POST['valor'];
-    $imovel->area = $_POST['area'];
-    $imovel->quartos = $_POST['quartos'];
-    $imovel->banheiros = $_POST['banheiros'];
-    $imovel->vagas = $_POST['vagas'];
-    $imovel->cidade = $_POST['cidade'];
-    $imovel->bairro = $_POST['bairro'];
-    $imovel->status = $_POST['status'];
-    $imovel->foto = $dados['foto'];
+    $imovel->titulo     = $_POST['titulo'];
+    $imovel->descricao  = $_POST['descricao'];
+    $imovel->valor      = $_POST['valor'];
+    $imovel->area       = $_POST['area'];
+    $imovel->quartos    = $_POST['quartos'];
+    $imovel->banheiros  = $_POST['banheiros'];
+    $imovel->vagas      = $_POST['vagas'];
+    $imovel->cidade     = $_POST['cidade'];
+    $imovel->bairro     = $_POST['bairro'];
+    $imovel->status     = $_POST['status'];
+    $imovel->foto       = $dados['foto'];
 
     if (isset($_FILES['foto']) && $_FILES['foto']['error'] === 0) {
         $imagemInfo = @getimagesize($_FILES['foto']['tmp_name']);
         $mimesPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
         if ($imagemInfo && in_array($imagemInfo['mime'], $mimesPermitidos)) {
             $extensoes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-            $ext = $extensoes[$imagemInfo['mime']];
+            $ext  = $extensoes[$imagemInfo['mime']];
             $nome = uniqid('imovel_') . '.' . $ext;
             move_uploaded_file($_FILES['foto']['tmp_name'], __DIR__ . '/../uploads/' . $nome);
             $imovel->foto = $nome;
@@ -47,10 +43,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    if ($imovel->atualizar()) {
+    if (!$erro && $dao->atualizar($imovel)) {
         header('Location: index.php?msg=Imóvel atualizado com sucesso!');
         exit;
-    } else {
+    } elseif (!$erro) {
         $erro = 'Erro ao atualizar imóvel.';
     }
 }

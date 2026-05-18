@@ -5,12 +5,11 @@ $usuario_logado = JWT::verificar($_COOKIE['token'] ?? '', getenv('JWT_SECRET'));
 if (!$usuario_logado) { header('Location: login.php'); exit; }
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/classes/Imovel.php';
+require_once __DIR__ . '/classes/ImovelDAO.php';
 
-$db = new Database();
-$conn = $db->conectar();
-$imovel = new Imovel($conn);
-
-$resultado = $imovel->listarComCliente();
+$db  = new Database();
+$dao = new ImovelDAO($db->conectar());
+$resultado = $dao->listarComCliente();
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">

@@ -2,11 +2,11 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../classes/Contrato.php';
+require_once __DIR__ . '/../classes/ContratoDAO.php';
 
-$db = new Database();
-$conn = $db->conectar();
-$contrato = new Contrato($conn);
-$resultado = $contrato->listar();
+$db  = new Database();
+$dao = new ContratoDAO($db->conectar());
+$resultado = $dao->listar();
 ?>
 <?php include __DIR__ . '/../includes/header.php'; ?>
 

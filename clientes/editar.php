@@ -2,29 +2,25 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../classes/Cliente.php';
+require_once __DIR__ . '/../classes/ClienteDAO.php';
 
-$db = new Database();
-$conn = $db->conectar();
-$cliente = new Cliente($conn);
+$db  = new Database();
+$dao = new ClienteDAO($db->conectar());
 
-$cliente->id = (int)($_GET['id'] ?? 0);
-$dados = $cliente->buscarPorId();
-
-if (!$dados) {
-    header('Location: index.php');
-    exit;
-}
+$dados = $dao->buscarPorId((int)($_GET['id'] ?? 0));
+if (!$dados) { header('Location: index.php'); exit; }
 
 $erro = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $cliente->id = (int)$_POST['id'];
-    $cliente->nome = $_POST['nome'];
-    $cliente->cpf = $_POST['cpf'];
-    $cliente->email = $_POST['email'];
+    $cliente           = new Cliente();
+    $cliente->id       = (int)$_POST['id'];
+    $cliente->nome     = $_POST['nome'];
+    $cliente->cpf      = $_POST['cpf'];
+    $cliente->email    = $_POST['email'];
     $cliente->telefone = $_POST['telefone'];
 
-    if ($cliente->atualizar()) {
+    if ($dao->atualizar($cliente)) {
         header('Location: index.php?msg=Cliente atualizado com sucesso!');
         exit;
     } else {

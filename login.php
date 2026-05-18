@@ -10,18 +10,19 @@ if (JWT::verificar($token, getenv('JWT_SECRET'))) {
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/classes/Usuario.php';
+require_once __DIR__ . '/classes/UsuarioDAO.php';
 
 $erro = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $db = new Database();
-    $conn = $db->conectar();
-    $usuario = new Usuario($conn);
+    $db  = new Database();
+    $dao = new UsuarioDAO($db->conectar());
 
+    $usuario          = new Usuario();
     $usuario->usuario = $_POST['usuario'];
-    $usuario->senha = $_POST['senha'];
+    $usuario->senha   = $_POST['senha'];
 
-    $dados = $usuario->login();
+    $dados = $dao->login($usuario);
 
     if ($dados) {
         $payload = [

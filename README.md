@@ -40,11 +40,14 @@ imobtech/
 │   ├── clientes.php      # Endpoint GET de clientes
 │   └── contratos.php     # Endpoint GET de contratos
 ├── classes/
-│   ├── Database.php      # Conexão PDO
-│   ├── Imovel.php        # CRUD de imóveis
-│   ├── Cliente.php       # CRUD de clientes
-│   ├── Contrato.php      # CRUD de contratos
-│   ├── Usuario.php       # Login e cadastro
+│   ├── Imovel.php        # Modelo — propriedades do imóvel
+│   ├── ImovelDAO.php     # DAO — queries SQL de imóveis
+│   ├── Cliente.php       # Modelo — propriedades do cliente
+│   ├── ClienteDAO.php    # DAO — queries SQL de clientes
+│   ├── Contrato.php      # Modelo — propriedades do contrato
+│   ├── ContratoDAO.php   # DAO — queries SQL de contratos
+│   ├── Usuario.php       # Modelo — propriedades do usuário
+│   ├── UsuarioDAO.php    # DAO — login e cadastro
 │   └── JWT.php           # Geração e verificação de tokens
 ├── config/
 │   ├── database.php      # Instancia a conexão
@@ -144,6 +147,56 @@ psql 'SUA_CONNECTION_STRING' -f banco.sql
 | data_inicio | DATE | Início do contrato |
 | data_fim | DATE | Fim do contrato |
 | criado_em | TIMESTAMP | Data de criação |
+
+---
+
+## Padrão DAO (Data Access Object)
+
+O sistema aplica o padrão DAO para separar as responsabilidades em duas camadas distintas:
+
+| Camada | Arquivos | Responsabilidade |
+|---|---|---|
+| **Modelo** | `Imovel.php`, `Cliente.php`, `Contrato.php`, `Usuario.php` | Apenas os dados — propriedades do objeto |
+| **DAO** | `ImovelDAO.php`, `ClienteDAO.php`, `ContratoDAO.php`, `UsuarioDAO.php` | Apenas o banco — queries SQL |
+
+```php
+// MODELO — só propriedades, sem nenhuma lógica de banco:
+class Imovel {
+    public $id;
+    public $titulo;
+    public $valor;
+    public $tipo;
+    // ...
+}
+
+// DAO — recebe o modelo como parâmetro e faz o acesso ao banco:
+class ImovelDAO {
+    private $conn;
+
+    public function __construct($db) {
+        $this->conn = $db; // recebe a conexão via injeção de dependência
+    }
+
+    public function criar(Imovel $imovel) {
+        $sql  = "INSERT INTO imoveis (titulo, valor, ...) VALUES (:titulo, :valor, ...)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':titulo', $imovel->titulo); // acessa as propriedades do modelo
+        return $stmt->execute();
+    }
+}
+```
+
+```php
+// Como as páginas usam o padrão DAO:
+$db  = new Database();
+$dao = new ImovelDAO($db->conectar()); // DAO recebe a conexão
+
+$imovel        = new Imovel();         // modelo recebe os dados do formulário
+$imovel->titulo = $_POST['titulo'];
+$imovel->valor  = $_POST['valor'];
+
+$dao->criar($imovel); // DAO salva o modelo no banco
+```
 
 ---
 

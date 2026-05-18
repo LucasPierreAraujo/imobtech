@@ -8,23 +8,24 @@ if (isset($_SESSION['usuario_id'])) {
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/classes/Usuario.php';
+require_once __DIR__ . '/classes/UsuarioDAO.php';
 
 $erro = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $db = new Database();
-    $conn = $db->conectar();
-    $usuario = new Usuario($conn);
+    $db  = new Database();
+    $dao = new UsuarioDAO($db->conectar());
 
-    $usuario->nome = $_POST['nome'];
+    $usuario          = new Usuario();
+    $usuario->nome    = $_POST['nome'];
     $usuario->usuario = $_POST['usuario'];
-    $usuario->senha = $_POST['senha'];
+    $usuario->senha   = $_POST['senha'];
 
     if (strlen($_POST['senha']) < 6) {
         $erro = 'A senha deve ter pelo menos 6 caracteres.';
-    } elseif ($usuario->usuarioExiste()) {
+    } elseif ($dao->usuarioExiste($usuario)) {
         $erro = 'Este nome de usuário já está em uso.';
-    } elseif ($usuario->cadastrar()) {
+    } elseif ($dao->criar($usuario)) {
         header('Location: login.php?msg=Conta criada! Faça login.');
         exit;
     } else {
