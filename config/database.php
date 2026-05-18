@@ -16,7 +16,8 @@ class Database {
             $this->conn = new PDO($dsn, $user, $pass);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
-            echo "Erro na conexão: " . $e->getMessage();
+            error_log($e->getMessage());
+            die("Erro ao conectar com o banco de dados.");
         }
         return $this->conn;
     }

@@ -7,7 +7,7 @@ $db = new Database();
 $conn = $db->conectar();
 $cliente = new Cliente($conn);
 
-$cliente->id = $_GET['id'] ?? 0;
+$cliente->id = (int)($_GET['id'] ?? 0);
 $dados = $cliente->buscarPorId();
 
 if (!$dados) {
@@ -18,7 +18,7 @@ if (!$dados) {
 $erro = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $cliente->id = $_POST['id'];
+    $cliente->id = (int)$_POST['id'];
     $cliente->nome = $_POST['nome'];
     $cliente->cpf = $_POST['cpf'];
     $cliente->email = $_POST['email'];

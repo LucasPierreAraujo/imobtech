@@ -12,7 +12,7 @@ $contrato = new Contrato($conn);
 $imovel = new Imovel($conn);
 $cliente = new Cliente($conn);
 
-$contrato->id = $_GET['id'] ?? 0;
+$contrato->id = (int)($_GET['id'] ?? 0);
 $dados = $contrato->buscarPorId();
 
 if (!$dados) {
@@ -26,7 +26,7 @@ $clientes = $cliente->listar();
 $erro = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $contrato->id = $_POST['id'];
+    $contrato->id = (int)$_POST['id'];
     $contrato->imovel_id = $_POST['imovel_id'];
     $contrato->cliente_id = $_POST['cliente_id'];
     $contrato->tipo = $_POST['tipo'];

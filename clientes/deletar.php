@@ -7,7 +7,7 @@ $db = new Database();
 $conn = $db->conectar();
 $cliente = new Cliente($conn);
 
-$cliente->id = $_GET['id'] ?? 0;
+$cliente->id = (int)($_GET['id'] ?? 0);
 
 if ($cliente->deletar()) {
     header('Location: index.php?msg=Cliente excluído com sucesso!');

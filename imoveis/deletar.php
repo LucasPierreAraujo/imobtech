@@ -7,7 +7,7 @@ $db = new Database();
 $conn = $db->conectar();
 $imovel = new Imovel($conn);
 
-$imovel->id = $_GET['id'] ?? 0;
+$imovel->id = (int)($_GET['id'] ?? 0);
 
 if ($imovel->deletar()) {
     header('Location: index.php?msg=Imóvel excluído com sucesso!');

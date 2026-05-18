@@ -4,6 +4,7 @@
     { "src": "**/*.php", "use": "vercel-php@0.7.2" }
   ],
   "routes": [
+    { "src": "/uploads/.*\\.php.*", "dest": "/index.php" },
     { "src": "/(.*)", "dest": "/$1" }
   ]
 }

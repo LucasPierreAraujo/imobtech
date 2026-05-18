@@ -9,7 +9,7 @@ $conn = $db->conectar();
 $contrato = new Contrato($conn);
 $imovel = new Imovel($conn);
 
-$contrato->id = $_GET['id'] ?? 0;
+$contrato->id = (int)($_GET['id'] ?? 0);
 $dados = $contrato->buscarPorId();
 
 if ($contrato->deletar()) {

@@ -53,11 +53,21 @@ class Imovel {
                 VALUES (:tipo, :finalidade, :titulo, :descricao, :valor, :area, :quartos, :banheiros, :vagas, :cidade, :bairro, :status, :foto)";
         $stmt = $this->conn->prepare($sql);
 
-        $this->tipo = htmlspecialchars(strip_tags($this->tipo));
-        $this->finalidade = htmlspecialchars(strip_tags($this->finalidade));
-        $this->titulo = htmlspecialchars(strip_tags($this->titulo));
-        $this->cidade = htmlspecialchars(strip_tags($this->cidade));
-        $this->bairro = htmlspecialchars(strip_tags($this->bairro));
+        $tiposValidos      = ['casa', 'apartamento', 'chacara', 'terreno', 'sitio', 'empresarial'];
+        $finalidadesValidas = ['alugar', 'comprar', 'financiamento'];
+
+        if (!in_array($this->tipo, $tiposValidos) || !in_array($this->finalidade, $finalidadesValidas)) {
+            return false;
+        }
+
+        $this->titulo   = htmlspecialchars(strip_tags($this->titulo));
+        $this->cidade   = htmlspecialchars(strip_tags($this->cidade));
+        $this->bairro   = htmlspecialchars(strip_tags($this->bairro));
+        $this->valor    = abs((float)$this->valor);
+        $this->area     = abs((float)$this->area);
+        $this->quartos  = abs((int)$this->quartos);
+        $this->banheiros = abs((int)$this->banheiros);
+        $this->vagas    = abs((int)$this->vagas);
 
         $stmt->bindParam(':tipo', $this->tipo);
         $stmt->bindParam(':finalidade', $this->finalidade);
@@ -85,12 +95,23 @@ class Imovel {
                 cidade=:cidade, bairro=:bairro, status=:status, foto=:foto WHERE id=:id";
         $stmt = $this->conn->prepare($sql);
 
-        $this->tipo = htmlspecialchars(strip_tags($this->tipo));
-        $this->finalidade = htmlspecialchars(strip_tags($this->finalidade));
-        $this->titulo = htmlspecialchars(strip_tags($this->titulo));
-        $this->cidade = htmlspecialchars(strip_tags($this->cidade));
-        $this->bairro = htmlspecialchars(strip_tags($this->bairro));
-        $this->id = htmlspecialchars(strip_tags($this->id));
+        $tiposValidos      = ['casa', 'apartamento', 'chacara', 'terreno', 'sitio', 'empresarial'];
+        $finalidadesValidas = ['alugar', 'comprar', 'financiamento'];
+        $statusValidos     = ['disponivel', 'vendido', 'alugado'];
+
+        if (!in_array($this->tipo, $tiposValidos) || !in_array($this->finalidade, $finalidadesValidas) || !in_array($this->status, $statusValidos)) {
+            return false;
+        }
+
+        $this->id       = (int)$this->id;
+        $this->titulo   = htmlspecialchars(strip_tags($this->titulo));
+        $this->cidade   = htmlspecialchars(strip_tags($this->cidade));
+        $this->bairro   = htmlspecialchars(strip_tags($this->bairro));
+        $this->valor    = abs((float)$this->valor);
+        $this->area     = abs((float)$this->area);
+        $this->quartos  = abs((int)$this->quartos);
+        $this->banheiros = abs((int)$this->banheiros);
+        $this->vagas    = abs((int)$this->vagas);
 
         $stmt->bindParam(':tipo', $this->tipo);
         $stmt->bindParam(':finalidade', $this->finalidade);
