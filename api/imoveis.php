@@ -11,58 +11,68 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../classes/Imovel.php';
 require_once __DIR__ . '/../classes/ImovelDAO.php';
 
-autenticarApi();
+class ImoveisController {
+    private ImovelDAO $dao;
 
-$db  = new Database();
-$dao = new ImovelDAO($db->conectar());
+    private const TIPOS       = ['casa', 'apartamento', 'chacara', 'terreno', 'sitio', 'empresarial'];
+    private const FINALIDADES = ['alugar', 'comprar', 'financiamento'];
 
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $stmt  = $dao->listarComCliente();
-    $lista = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    respostaJson($lista);
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $body = json_decode(file_get_contents('php://input'), true);
-    if ($body === null) respostaJson(['erro' => 'JSON inválido.'], 400);
-
-    $tiposValidos       = ['casa', 'apartamento', 'chacara', 'terreno', 'sitio', 'empresarial'];
-    $finalidadesValidas = ['alugar', 'comprar', 'financiamento'];
-
-    $tipo       = $body['tipo'] ?? '';
-    $finalidade = $body['finalidade'] ?? '';
-    $titulo     = trim($body['titulo'] ?? '');
-    $cidade     = trim($body['cidade'] ?? '');
-
-    if (!in_array($tipo, $tiposValidos) || !in_array($finalidade, $finalidadesValidas)) {
-        respostaJson(['erro' => 'Tipo ou finalidade inválidos.'], 422);
-    }
-    if ($titulo === '' || $cidade === '') {
-        respostaJson(['erro' => 'Os campos titulo e cidade são obrigatórios.'], 422);
+    public function __construct() {
+        Api::autenticar();
+        $this->dao = new ImovelDAO((new Database())->conectar());
     }
 
-    $imovel             = new Imovel();
-    $imovel->tipo       = $tipo;
-    $imovel->finalidade = $finalidade;
-    $imovel->titulo     = $titulo;
-    $imovel->descricao  = $body['descricao'] ?? '';
-    $imovel->valor      = $body['valor'] ?? 0;
-    $imovel->area       = $body['area'] ?? 0;
-    $imovel->quartos    = $body['quartos'] ?? 0;
-    $imovel->banheiros  = $body['banheiros'] ?? 0;
-    $imovel->vagas      = $body['vagas'] ?? 0;
-    $imovel->cidade     = $cidade;
-    $imovel->bairro     = $body['bairro'] ?? '';
-    $imovel->foto       = null;
+    public function handle(): void {
+        match($_SERVER['REQUEST_METHOD']) {
+            'GET'   => $this->get(),
+            'POST'  => $this->post(),
+            default => Api::responder(['erro' => 'Método não permitido.'], 405)
+        };
+    }
 
-    try {
-        if ($dao->criar($imovel)) {
-            respostaJson(['mensagem' => 'Imóvel cadastrado com sucesso.'], 201);
+    private function get(): void {
+        Api::responder($this->dao->listarComCliente()->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    private function post(): void {
+        $body = json_decode(file_get_contents('php://input'), true);
+        if ($body === null) Api::responder(['erro' => 'JSON inválido.'], 400);
+
+        $tipo       = $body['tipo'] ?? '';
+        $finalidade = $body['finalidade'] ?? '';
+        $titulo     = trim($body['titulo'] ?? '');
+        $cidade     = trim($body['cidade'] ?? '');
+
+        if (!in_array($tipo, self::TIPOS) || !in_array($finalidade, self::FINALIDADES)) {
+            Api::responder(['erro' => 'Tipo ou finalidade inválidos.'], 422);
         }
-        respostaJson(['erro' => 'Erro ao cadastrar imóvel.'], 500);
-    } catch (Exception $e) {
-        respostaJson(['erro' => 'Erro interno do servidor.'], 500);
+        if ($titulo === '' || $cidade === '') {
+            Api::responder(['erro' => 'Os campos titulo e cidade são obrigatórios.'], 422);
+        }
+
+        $imovel             = new Imovel();
+        $imovel->tipo       = $tipo;
+        $imovel->finalidade = $finalidade;
+        $imovel->titulo     = $titulo;
+        $imovel->descricao  = $body['descricao'] ?? '';
+        $imovel->valor      = $body['valor'] ?? 0;
+        $imovel->area       = $body['area'] ?? 0;
+        $imovel->quartos    = $body['quartos'] ?? 0;
+        $imovel->banheiros  = $body['banheiros'] ?? 0;
+        $imovel->vagas      = $body['vagas'] ?? 0;
+        $imovel->cidade     = $cidade;
+        $imovel->bairro     = $body['bairro'] ?? '';
+        $imovel->foto       = null;
+
+        try {
+            if ($this->dao->criar($imovel)) {
+                Api::responder(['mensagem' => 'Imóvel cadastrado com sucesso.'], 201);
+            }
+            Api::responder(['erro' => 'Erro ao cadastrar imóvel.'], 500);
+        } catch (Exception $e) {
+            Api::responder(['erro' => 'Erro interno do servidor.'], 500);
+        }
     }
 }
 
-respostaJson(['erro' => 'Método não permitido.'], 405);
+(new ImoveisController())->handle();
