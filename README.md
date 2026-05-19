@@ -640,3 +640,5 @@ vercel
 ```
 
 No painel da Vercel → **Settings → Environment Variables**, adicione `DATABASE_URL` e `JWT_SECRET` com os mesmos valores do `.env` local.
+
+Acesso: imobtech-delta.vercel.app
