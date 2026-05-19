@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     if (!$erro && $dao->atualizar($imovel)) {
-        header('Location: index.php?msg=Imóvel atualizado com sucesso!');
+        header('Location: index.php?msg=' . urlencode('Imóvel atualizado com sucesso!'));
         exit;
     } elseif (!$erro) {
         $erro = 'Erro ao atualizar imóvel.';

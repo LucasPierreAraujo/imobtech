@@ -9,8 +9,8 @@ $dao = new ImovelDAO($db->conectar());
 $id  = (int)($_GET['id'] ?? 0);
 
 if ($dao->deletar($id)) {
-    header('Location: index.php?msg=Imóvel excluído com sucesso!');
+    header('Location: index.php?msg=' . urlencode('Imóvel excluído com sucesso!'));
 } else {
-    header('Location: index.php?msg=Erro ao excluir. Verifique se há contratos vinculados.');
+    header('Location: index.php?msg=' . urlencode('Erro ao excluir. Verifique se há contratos vinculados.'));
 }
 exit;

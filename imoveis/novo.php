@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     if (!$erro && $dao->criar($imovel)) {
-        header('Location: index.php?msg=Imóvel cadastrado com sucesso!');
+        header('Location: index.php?msg=' . urlencode('Imóvel cadastrado com sucesso!'));
         exit;
     } elseif (!$erro) {
         $erro = 'Erro ao cadastrar imóvel.';

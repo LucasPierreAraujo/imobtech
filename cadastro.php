@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } elseif ($dao->usuarioExiste($usuario)) {
         $erro = 'Este nome de usuário já está em uso.';
     } elseif ($dao->criar($usuario)) {
-        header('Location: login.php?msg=Conta criada! Faça login.');
+        header('Location: login.php?msg=' . urlencode('Conta criada! Faça login.'));
         exit;
     } else {
         $erro = 'Erro ao criar conta.';

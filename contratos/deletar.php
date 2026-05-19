@@ -18,7 +18,7 @@ if ($contratoDAO->deletar($id)) {
     if ($dados) {
         $imovelDAO->atualizarStatus($dados['imovel_id'], 'disponivel');
     }
-    header('Location: index.php?msg=Contrato excluído com sucesso!');
+    header('Location: index.php?msg=' . urlencode('Contrato excluído com sucesso!'));
 } else {
     header('Location: index.php?msg=Erro ao excluir contrato.');
 }
