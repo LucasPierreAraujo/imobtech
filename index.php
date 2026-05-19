@@ -78,6 +78,9 @@ $resultado = $dao->listarComCliente();
                         <?php endif; ?>
                     </span>
                     <h5 class="card-title mt-2"><?= htmlspecialchars($row['titulo']) ?></h5>
+                    <?php if ($row['descricao']): ?>
+                    <p class="card-text text-muted small mb-1"><?= htmlspecialchars($row['descricao']) ?></p>
+                    <?php endif; ?>
                     <p class="text-muted mb-1"><?= htmlspecialchars($row['bairro']) ?> - <?= htmlspecialchars($row['cidade']) ?></p>
                     <?php if ($row['quartos'] > 0): ?>
                     <small><?= $row['quartos'] ?> quartos | <?= $row['banheiros'] ?> banheiros | <?= $row['vagas'] ?> vagas</small><br>
