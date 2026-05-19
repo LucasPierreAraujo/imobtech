@@ -93,7 +93,7 @@ $resultado = $dao->listarComCliente();
     </div>
 </div>
 
-<footer class="text-center fixed-bottom">
+<footer class="text-center">
     <p class="mb-0">Imobtech &copy; <?= date('Y') ?></p>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
