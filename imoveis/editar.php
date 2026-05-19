@@ -76,9 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <div class="col-md-3 mb-3">
                     <label>Finalidade</label>
                     <select name="finalidade" class="form-select" required>
-                        <?php foreach (['alugar', 'comprar', 'financiamento'] as $f): ?>
-                        <option value="<?= $f ?>" <?= $dados['finalidade'] == $f ? 'selected' : '' ?>><?= ucfirst($f) ?></option>
-                        <?php endforeach; ?>
+                        <option value="alugar" <?= $dados['finalidade'] === 'alugar' ? 'selected' : '' ?>>Alugar</option>
+                        <option value="comprar" <?= in_array($dados['finalidade'], ['comprar', 'financiamento']) ? 'selected' : '' ?>>Comprar / Financiar</option>
                     </select>
                 </div>
             </div>

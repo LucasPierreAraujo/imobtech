@@ -110,7 +110,7 @@ psql 'SUA_CONNECTION_STRING' -f banco.sql
 |---|---|---|
 | id | SERIAL PK | Identificador |
 | tipo | VARCHAR(20) | casa, apartamento, chacara, terreno, sitio, empresarial |
-| finalidade | VARCHAR(20) | alugar, comprar, financiamento |
+| finalidade | VARCHAR(20) | alugar, comprar |
 | titulo | VARCHAR(255) | Título do imóvel |
 | descricao | TEXT | Descrição |
 | valor | NUMERIC(15,2) | Valor em reais |
@@ -141,8 +141,12 @@ psql 'SUA_CONNECTION_STRING' -f banco.sql
 | imovel_id | INT FK | Referência ao imóvel |
 | cliente_id | INT FK | Referência ao cliente |
 | tipo | VARCHAR(20) | aluguel, compra, financiamento |
+| forma_pagamento | VARCHAR(20) | dinheiro, debito, pix (somente para compra) |
+| valor_entrada | NUMERIC(15,2) | Valor de entrada (financiamento) |
+| valor_parcela | NUMERIC(15,2) | Valor mensal (aluguel) ou valor da parcela |
+| calcao | NUMERIC(15,2) | Calção de 2 meses adiantado (aluguel) |
 | valor_total | NUMERIC(15,2) | Valor total do contrato |
-| parcelas | INT | Número de parcelas |
+| parcelas | INT | Número de meses (aluguel) ou parcelas |
 | data_inicio | DATE | Início do contrato |
 | data_fim | DATE | Fim do contrato |
 | criado_em | TIMESTAMP | Data de criação |
@@ -279,9 +283,17 @@ Localização: `classes/Contrato.php` e `classes/ContratoDAO.php`
 |---|---|
 | `listar()` | Retorna contratos com nome do imóvel e cliente via JOIN |
 | `buscarPorId()` | Retorna um contrato com JOIN pelo ID |
-| `criar()` | Insere um novo contrato |
+| `criar()` | Insere um novo contrato com todos os campos financeiros |
 | `atualizar()` | Atualiza um contrato existente |
 | `deletar()` | Remove um contrato |
+
+O modelo `Contrato` armazena campos específicos por tipo:
+
+| Tipo | Campos utilizados |
+|---|---|
+| **Aluguel** | `valor_parcela` (mensal), `parcelas` (meses), `calcao` (2 × mensal), `valor_total` |
+| **Compra** | `forma_pagamento` (dinheiro/débito/pix), `valor_parcela` = `valor_total` (preço do imóvel) |
+| **Financiamento** | `valor_entrada`, `valor_parcela`, `parcelas` (calculado pelas datas), `valor_total` |
 
 > Ao criar um contrato, o status do imóvel é atualizado automaticamente para `alugado` ou `vendido`. Ao excluir, volta para `disponivel`.
 
@@ -468,7 +480,7 @@ Resposta:
 
 Valores válidos para `tipo`: `casa`, `apartamento`, `chacara`, `terreno`, `sitio`, `empresarial`
 
-Valores válidos para `finalidade`: `alugar`, `comprar`, `financiamento`
+Valores válidos para `finalidade`: `alugar`, `comprar`
 
 Campos obrigatórios: `tipo`, `finalidade`, `titulo`, `cidade`
 

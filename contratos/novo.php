@@ -83,9 +83,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-$precos = [];
+$imoveisJson = [];
+$precos      = [];
 foreach ($todosImoveis as $im) {
-    $precos[$im['id']] = (float)$im['valor'];
+    $imoveisJson[] = [
+        'id'        => (int)$im['id'],
+        'titulo'    => $im['titulo'],
+        'tipo'      => $im['tipo'],
+        'finalidade'=> $im['finalidade'],
+        'valor'     => (float)$im['valor'],
+    ];
+    $precos[(int)$im['id']] = (float)$im['valor'];
 }
 ?>
 <?php include __DIR__ . '/../includes/header.php'; ?>
@@ -99,27 +107,6 @@ foreach ($todosImoveis as $im) {
 <div class="card">
     <div class="card-body">
         <form method="POST">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label>Imóvel</label>
-                    <select name="imovel_id" id="imovel_id" class="form-select" required onchange="preencherValor()">
-                        <option value="">Selecione um imóvel</option>
-                        <?php foreach ($todosImoveis as $i): ?>
-                        <option value="<?= $i['id'] ?>"><?= htmlspecialchars($i['titulo']) ?> (<?= ucfirst($i['tipo']) ?>)</option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label>Cliente</label>
-                    <select name="cliente_id" class="form-select" required>
-                        <option value="">Selecione um cliente</option>
-                        <?php foreach ($clientes as $c): ?>
-                        <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['nome']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-            </div>
-
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label>Tipo de Contrato</label>
@@ -137,6 +124,24 @@ foreach ($todosImoveis as $im) {
                 <div class="col-md-4 mb-3">
                     <label>Data de Fim</label>
                     <input type="date" name="data_fim" id="data_fim" class="form-control" oninput="onDatasChange()">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label>Imóvel</label>
+                    <select name="imovel_id" id="imovel_id" class="form-select" required onchange="preencherValor()" disabled>
+                        <option value="">Selecione o tipo de contrato primeiro</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Cliente</label>
+                    <select name="cliente_id" class="form-select" required>
+                        <option value="">Selecione um cliente</option>
+                        <?php foreach ($clientes as $c): ?>
+                        <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['nome']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
             </div>
 
@@ -220,7 +225,8 @@ foreach ($todosImoveis as $im) {
 </div>
 
 <script>
-const precos = <?= json_encode($precos) ?>;
+const imoveis = <?= json_encode($imoveisJson) ?>;
+const precos  = <?= json_encode($precos) ?>;
 
 function fmt(v) {
     return 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -236,6 +242,37 @@ function mesesEntreDatas() {
     return m > 0 ? m : 0;
 }
 
+function filtrarImoveis() {
+    const tipo   = document.getElementById('tipo').value;
+    const select = document.getElementById('imovel_id');
+
+    select.innerHTML = '';
+    select.disabled  = !tipo;
+
+    if (!tipo) {
+        select.innerHTML = '<option value="">Selecione o tipo de contrato primeiro</option>';
+        return;
+    }
+
+    const opt0 = document.createElement('option');
+    opt0.value = '';
+    opt0.textContent = 'Selecione um imóvel';
+    select.appendChild(opt0);
+
+    imoveis
+        .filter(i => tipo === 'aluguel'
+            ? i.finalidade === 'alugar'
+            : i.finalidade === 'comprar' || i.finalidade === 'financiamento')
+        .forEach(i => {
+            const opt = document.createElement('option');
+            opt.value = i.id;
+            opt.textContent = i.titulo + ' (' + i.tipo.charAt(0).toUpperCase() + i.tipo.slice(1) + ')';
+            select.appendChild(opt);
+        });
+
+    preencherValor();
+}
+
 function preencherValor() {
     const id    = document.getElementById('imovel_id').value;
     const preco = precos[id] || 0;
@@ -249,7 +286,7 @@ function atualizarTipo() {
     document.getElementById('section-aluguel').style.display       = tipo === 'aluguel'       ? '' : 'none';
     document.getElementById('section-compra').style.display        = tipo === 'compra'        ? '' : 'none';
     document.getElementById('section-financiamento').style.display = tipo === 'financiamento' ? '' : 'none';
-    preencherValor();
+    filtrarImoveis();
 }
 
 function onDatasChange() {
@@ -275,9 +312,8 @@ function calcular() {
         const mensal = parseFloat(document.getElementById('aluguel_mensal').value) || 0;
         const meses  = parseInt(document.getElementById('aluguel_meses').value) || 0;
         const total  = mensal * meses;
-        const calcao = mensal * 2;
         document.getElementById('total-aluguel').textContent  = fmt(total);
-        document.getElementById('display-calcao').textContent = fmt(calcao);
+        document.getElementById('display-calcao').textContent = fmt(mensal * 2);
         document.getElementById('display-multa').textContent  = fmt(total);
 
     } else if (tipo === 'financiamento') {

@@ -75,8 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <select name="finalidade" class="form-select" required>
                         <option value="">Selecione</option>
                         <option value="alugar">Alugar</option>
-                        <option value="comprar">Comprar</option>
-                        <option value="financiamento">Financiamento</option>
+                        <option value="comprar">Comprar / Financiar</option>
                     </select>
                 </div>
             </div>
