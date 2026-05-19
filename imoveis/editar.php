@@ -33,8 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $imagemInfo      = @getimagesize($_FILES['foto']['tmp_name']);
         $mimesPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
         if ($imagemInfo && in_array($imagemInfo['mime'], $mimesPermitidos)) {
-            $dados        = file_get_contents($_FILES['foto']['tmp_name']);
-            $imovel->foto = 'data:' . $imagemInfo['mime'] . ';base64,' . base64_encode($dados);
+            $fotoConteudo = file_get_contents($_FILES['foto']['tmp_name']);
+            $imovel->foto = 'data:' . $imagemInfo['mime'] . ';base64,' . base64_encode($fotoConteudo);
         } else {
             $erro = 'Arquivo inválido. Envie apenas imagens JPG, PNG ou WEBP.';
         }

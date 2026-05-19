@@ -12,6 +12,7 @@ CREATE TABLE imoveis (
     cidade VARCHAR(100),
     bairro VARCHAR(100),
     status VARCHAR(20) DEFAULT 'disponivel',
+    foto TEXT,
     criado_em TIMESTAMP DEFAULT NOW()
 );
 
@@ -48,7 +49,8 @@ CREATE TABLE contratos (
     criado_em TIMESTAMP DEFAULT NOW()
 );
 
--- Migração para banco existente:
+-- Migração para banco existente (rodar uma vez se o banco foi criado antes destas colunas):
+-- ALTER TABLE imoveis ADD COLUMN IF NOT EXISTS foto TEXT;
 -- ALTER TABLE contratos ADD COLUMN IF NOT EXISTS forma_pagamento VARCHAR(20);
 -- ALTER TABLE contratos ADD COLUMN IF NOT EXISTS valor_entrada NUMERIC(15,2) DEFAULT 0;
 -- ALTER TABLE contratos ADD COLUMN IF NOT EXISTS valor_parcela NUMERIC(15,2) DEFAULT 0;

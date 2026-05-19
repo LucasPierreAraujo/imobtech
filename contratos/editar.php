@@ -22,15 +22,19 @@ $clientes = $clienteDAO->listar();
 $erro     = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $contrato              = new Contrato();
-    $contrato->id          = (int)$_POST['id'];
-    $contrato->imovel_id   = $_POST['imovel_id'];
-    $contrato->cliente_id  = $_POST['cliente_id'];
-    $contrato->tipo        = $_POST['tipo'];
-    $contrato->valor_total = $_POST['valor_total'];
-    $contrato->parcelas    = $_POST['parcelas'];
-    $contrato->data_inicio = $_POST['data_inicio'];
-    $contrato->data_fim    = $_POST['data_fim'];
+    $contrato                  = new Contrato();
+    $contrato->id              = (int)$_POST['id'];
+    $contrato->imovel_id       = $_POST['imovel_id'];
+    $contrato->cliente_id      = $_POST['cliente_id'];
+    $contrato->tipo            = $_POST['tipo'];
+    $contrato->valor_total     = $_POST['valor_total'];
+    $contrato->parcelas        = $_POST['parcelas'];
+    $contrato->data_inicio     = $_POST['data_inicio'];
+    $contrato->data_fim        = $_POST['data_fim'];
+    $contrato->forma_pagamento = $dados['forma_pagamento'] ?? null;
+    $contrato->valor_entrada   = $dados['valor_entrada']   ?? 0;
+    $contrato->valor_parcela   = $dados['valor_parcela']   ?? 0;
+    $contrato->calcao          = $dados['calcao']          ?? 0;
 
     if ($contratoDAO->atualizar($contrato)) {
         header('Location: index.php?msg=Contrato atualizado com sucesso!');
