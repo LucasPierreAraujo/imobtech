@@ -35,13 +35,13 @@ class ContratoDAO {
         $sql = "INSERT INTO {$this->tabela} (imovel_id, cliente_id, tipo, valor_total, parcelas, data_inicio, data_fim)
                 VALUES (:imovel_id, :cliente_id, :tipo, :valor_total, :parcelas, :data_inicio, :data_fim)";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':imovel_id',  $contrato->imovel_id);
-        $stmt->bindParam(':cliente_id', $contrato->cliente_id);
-        $stmt->bindParam(':tipo',       $contrato->tipo);
-        $stmt->bindParam(':valor_total',$contrato->valor_total);
-        $stmt->bindParam(':parcelas',   $contrato->parcelas);
-        $stmt->bindParam(':data_inicio',$contrato->data_inicio);
-        $stmt->bindParam(':data_fim',   $contrato->data_fim);
+        $stmt->bindParam(':imovel_id',   $contrato->imovel_id);
+        $stmt->bindParam(':cliente_id',  $contrato->cliente_id);
+        $stmt->bindParam(':tipo',        $contrato->tipo);
+        $stmt->bindParam(':valor_total', $contrato->valor_total);
+        $stmt->bindParam(':parcelas',    $contrato->parcelas);
+        $stmt->bindParam(':data_inicio', $contrato->data_inicio);
+        $stmt->bindParam(':data_fim',    $contrato->data_fim);
         return $stmt->execute();
     }
 
@@ -51,14 +51,14 @@ class ContratoDAO {
                 valor_total=:valor_total, parcelas=:parcelas, data_inicio=:data_inicio, data_fim=:data_fim
                 WHERE id=:id";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':imovel_id',  $contrato->imovel_id);
-        $stmt->bindParam(':cliente_id', $contrato->cliente_id);
-        $stmt->bindParam(':tipo',       $contrato->tipo);
-        $stmt->bindParam(':valor_total',$contrato->valor_total);
-        $stmt->bindParam(':parcelas',   $contrato->parcelas);
-        $stmt->bindParam(':data_inicio',$contrato->data_inicio);
-        $stmt->bindParam(':data_fim',   $contrato->data_fim);
-        $stmt->bindParam(':id',         $id);
+        $stmt->bindParam(':imovel_id',   $contrato->imovel_id);
+        $stmt->bindParam(':cliente_id',  $contrato->cliente_id);
+        $stmt->bindParam(':tipo',        $contrato->tipo);
+        $stmt->bindParam(':valor_total', $contrato->valor_total);
+        $stmt->bindParam(':parcelas',    $contrato->parcelas);
+        $stmt->bindParam(':data_inicio', $contrato->data_inicio);
+        $stmt->bindParam(':data_fim',    $contrato->data_fim);
+        $stmt->bindParam(':id',          $id);
         return $stmt->execute();
     }
 

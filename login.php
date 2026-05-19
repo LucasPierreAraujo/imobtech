@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'nome' => $dados['nome'],
             'exp'  => time() + (8 * 60 * 60)
         ];
-        $jwt = JWT::gerar($payload, getenv('JWT_SECRET'));
+        $jwt    = JWT::gerar($payload, getenv('JWT_SECRET'));
         $seguro = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
         setcookie('token', $jwt, ['expires' => $payload['exp'], 'path' => '/', 'httponly' => true, 'secure' => $seguro, 'samesite' => 'Strict']);
         header('Location: index.php');

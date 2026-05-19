@@ -24,26 +24,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $body = json_decode(file_get_contents('php://input'), true);
-    if (!$body) respostaJson(['erro' => 'Dados inválidos.'], 400);
+    if ($body === null) respostaJson(['erro' => 'JSON inválido.'], 400);
+
+    $tiposValidos       = ['casa', 'apartamento', 'chacara', 'terreno', 'sitio', 'empresarial'];
+    $finalidadesValidas = ['alugar', 'comprar', 'financiamento'];
+
+    $tipo       = $body['tipo'] ?? '';
+    $finalidade = $body['finalidade'] ?? '';
+    $titulo     = trim($body['titulo'] ?? '');
+    $cidade     = trim($body['cidade'] ?? '');
+
+    if (!in_array($tipo, $tiposValidos) || !in_array($finalidade, $finalidadesValidas)) {
+        respostaJson(['erro' => 'Tipo ou finalidade inválidos.'], 422);
+    }
+    if ($titulo === '' || $cidade === '') {
+        respostaJson(['erro' => 'Os campos titulo e cidade são obrigatórios.'], 422);
+    }
 
     $imovel             = new Imovel();
-    $imovel->tipo       = $body['tipo'] ?? '';
-    $imovel->finalidade = $body['finalidade'] ?? '';
-    $imovel->titulo     = $body['titulo'] ?? '';
+    $imovel->tipo       = $tipo;
+    $imovel->finalidade = $finalidade;
+    $imovel->titulo     = $titulo;
     $imovel->descricao  = $body['descricao'] ?? '';
     $imovel->valor      = $body['valor'] ?? 0;
     $imovel->area       = $body['area'] ?? 0;
     $imovel->quartos    = $body['quartos'] ?? 0;
     $imovel->banheiros  = $body['banheiros'] ?? 0;
     $imovel->vagas      = $body['vagas'] ?? 0;
-    $imovel->cidade     = $body['cidade'] ?? '';
+    $imovel->cidade     = $cidade;
     $imovel->bairro     = $body['bairro'] ?? '';
     $imovel->foto       = null;
 
-    if ($dao->criar($imovel)) {
-        respostaJson(['mensagem' => 'Imóvel cadastrado com sucesso.'], 201);
-    } else {
-        respostaJson(['erro' => 'Dados inválidos ou tipo/finalidade incorretos.'], 400);
+    try {
+        if ($dao->criar($imovel)) {
+            respostaJson(['mensagem' => 'Imóvel cadastrado com sucesso.'], 201);
+        }
+        respostaJson(['erro' => 'Erro ao cadastrar imóvel.'], 500);
+    } catch (Exception $e) {
+        respostaJson(['erro' => 'Erro interno do servidor.'], 500);
     }
 }
 

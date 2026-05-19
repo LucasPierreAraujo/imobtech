@@ -24,33 +24,23 @@ class ClienteDAO {
     }
 
     public function criar(Cliente $cliente) {
-        $nome     = htmlspecialchars(strip_tags($cliente->nome));
-        $cpf      = htmlspecialchars(strip_tags($cliente->cpf));
-        $email    = htmlspecialchars(strip_tags($cliente->email));
-        $telefone = htmlspecialchars(strip_tags($cliente->telefone));
-
         $sql = "INSERT INTO {$this->tabela} (nome, cpf, email, telefone) VALUES (:nome, :cpf, :email, :telefone)";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':nome',     $nome);
-        $stmt->bindParam(':cpf',      $cpf);
-        $stmt->bindParam(':email',    $email);
-        $stmt->bindParam(':telefone', $telefone);
+        $stmt->bindParam(':nome',     $cliente->nome);
+        $stmt->bindParam(':cpf',      $cliente->cpf);
+        $stmt->bindParam(':email',    $cliente->email);
+        $stmt->bindParam(':telefone', $cliente->telefone);
         return $stmt->execute();
     }
 
     public function atualizar(Cliente $cliente) {
-        $id       = (int)$cliente->id;
-        $nome     = htmlspecialchars(strip_tags($cliente->nome));
-        $cpf      = htmlspecialchars(strip_tags($cliente->cpf));
-        $email    = htmlspecialchars(strip_tags($cliente->email));
-        $telefone = htmlspecialchars(strip_tags($cliente->telefone));
-
+        $id  = (int)$cliente->id;
         $sql = "UPDATE {$this->tabela} SET nome=:nome, cpf=:cpf, email=:email, telefone=:telefone WHERE id=:id";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':nome',     $nome);
-        $stmt->bindParam(':cpf',      $cpf);
-        $stmt->bindParam(':email',    $email);
-        $stmt->bindParam(':telefone', $telefone);
+        $stmt->bindParam(':nome',     $cliente->nome);
+        $stmt->bindParam(':cpf',      $cliente->cpf);
+        $stmt->bindParam(':email',    $cliente->email);
+        $stmt->bindParam(':telefone', $cliente->telefone);
         $stmt->bindParam(':id',       $id);
         return $stmt->execute();
     }

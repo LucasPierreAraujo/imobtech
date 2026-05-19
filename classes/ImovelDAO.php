@@ -34,16 +34,13 @@ class ImovelDAO {
     }
 
     public function criar(Imovel $imovel) {
-        $tiposValidos      = ['casa', 'apartamento', 'chacara', 'terreno', 'sitio', 'empresarial'];
+        $tiposValidos       = ['casa', 'apartamento', 'chacara', 'terreno', 'sitio', 'empresarial'];
         $finalidadesValidas = ['alugar', 'comprar', 'financiamento'];
 
         if (!in_array($imovel->tipo, $tiposValidos) || !in_array($imovel->finalidade, $finalidadesValidas)) {
             return false;
         }
 
-        $titulo    = htmlspecialchars(strip_tags($imovel->titulo));
-        $cidade    = htmlspecialchars(strip_tags($imovel->cidade));
-        $bairro    = htmlspecialchars(strip_tags($imovel->bairro));
         $valor     = abs((float)$imovel->valor);
         $area      = abs((float)$imovel->area);
         $quartos   = abs((int)$imovel->quartos);
@@ -56,33 +53,30 @@ class ImovelDAO {
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':tipo',       $imovel->tipo);
         $stmt->bindParam(':finalidade', $imovel->finalidade);
-        $stmt->bindParam(':titulo',     $titulo);
+        $stmt->bindParam(':titulo',     $imovel->titulo);
         $stmt->bindParam(':descricao',  $imovel->descricao);
         $stmt->bindParam(':valor',      $valor);
         $stmt->bindParam(':area',       $area);
         $stmt->bindParam(':quartos',    $quartos);
         $stmt->bindParam(':banheiros',  $banheiros);
         $stmt->bindParam(':vagas',      $vagas);
-        $stmt->bindParam(':cidade',     $cidade);
-        $stmt->bindParam(':bairro',     $bairro);
+        $stmt->bindParam(':cidade',     $imovel->cidade);
+        $stmt->bindParam(':bairro',     $imovel->bairro);
         $stmt->bindParam(':status',     $status);
         $stmt->bindParam(':foto',       $imovel->foto);
         return $stmt->execute();
     }
 
     public function atualizar(Imovel $imovel) {
-        $tiposValidos      = ['casa', 'apartamento', 'chacara', 'terreno', 'sitio', 'empresarial'];
+        $tiposValidos       = ['casa', 'apartamento', 'chacara', 'terreno', 'sitio', 'empresarial'];
         $finalidadesValidas = ['alugar', 'comprar', 'financiamento'];
-        $statusValidos     = ['disponivel', 'vendido', 'alugado'];
+        $statusValidos      = ['disponivel', 'vendido', 'alugado'];
 
         if (!in_array($imovel->tipo, $tiposValidos) || !in_array($imovel->finalidade, $finalidadesValidas) || !in_array($imovel->status, $statusValidos)) {
             return false;
         }
 
         $id        = (int)$imovel->id;
-        $titulo    = htmlspecialchars(strip_tags($imovel->titulo));
-        $cidade    = htmlspecialchars(strip_tags($imovel->cidade));
-        $bairro    = htmlspecialchars(strip_tags($imovel->bairro));
         $valor     = abs((float)$imovel->valor);
         $area      = abs((float)$imovel->area);
         $quartos   = abs((int)$imovel->quartos);
@@ -95,15 +89,15 @@ class ImovelDAO {
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':tipo',       $imovel->tipo);
         $stmt->bindParam(':finalidade', $imovel->finalidade);
-        $stmt->bindParam(':titulo',     $titulo);
+        $stmt->bindParam(':titulo',     $imovel->titulo);
         $stmt->bindParam(':descricao',  $imovel->descricao);
         $stmt->bindParam(':valor',      $valor);
         $stmt->bindParam(':area',       $area);
         $stmt->bindParam(':quartos',    $quartos);
         $stmt->bindParam(':banheiros',  $banheiros);
         $stmt->bindParam(':vagas',      $vagas);
-        $stmt->bindParam(':cidade',     $cidade);
-        $stmt->bindParam(':bairro',     $bairro);
+        $stmt->bindParam(':cidade',     $imovel->cidade);
+        $stmt->bindParam(':bairro',     $imovel->bairro);
         $stmt->bindParam(':status',     $imovel->status);
         $stmt->bindParam(':foto',       $imovel->foto);
         $stmt->bindParam(':id',         $id);

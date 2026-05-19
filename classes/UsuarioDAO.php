@@ -20,14 +20,11 @@ class UsuarioDAO {
     }
 
     public function criar(Usuario $usuario) {
-        $nome    = htmlspecialchars(strip_tags($usuario->nome));
-        $login   = htmlspecialchars(strip_tags($usuario->usuario));
-        $hash    = password_hash($usuario->senha, PASSWORD_DEFAULT);
-
-        $sql = "INSERT INTO {$this->tabela} (nome, usuario, senha) VALUES (:nome, :usuario, :senha)";
+        $hash = password_hash($usuario->senha, PASSWORD_DEFAULT);
+        $sql  = "INSERT INTO {$this->tabela} (nome, usuario, senha) VALUES (:nome, :usuario, :senha)";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':nome',    $nome);
-        $stmt->bindParam(':usuario', $login);
+        $stmt->bindParam(':nome',    $usuario->nome);
+        $stmt->bindParam(':usuario', $usuario->usuario);
         $stmt->bindParam(':senha',   $hash);
         return $stmt->execute();
     }

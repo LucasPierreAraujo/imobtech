@@ -12,7 +12,7 @@ function autenticarApi() {
         exit;
     }
 
-    $token = substr($authorization, 7);
+    $token   = substr($authorization, 7);
     $usuario = JWT::verificar($token, getenv('JWT_SECRET'));
 
     if (!$usuario) {

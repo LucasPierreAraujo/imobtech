@@ -4,8 +4,8 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../classes/Imovel.php';
 require_once __DIR__ . '/../classes/ImovelDAO.php';
 
-$db  = new Database();
-$dao = new ImovelDAO($db->conectar());
+$db   = new Database();
+$dao  = new ImovelDAO($db->conectar());
 $erro = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
