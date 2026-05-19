@@ -35,10 +35,11 @@ Sistema web desenvolvido em PHP com POO (Programação Orientada a Objetos) para
 ```
 imobtech/
 ├── api/
-│   ├── auth.php          # Helper de autenticação para a API
-│   ├── imoveis.php       # Endpoint GET/POST de imóveis
-│   ├── clientes.php      # Endpoint GET de clientes
-│   └── contratos.php     # Endpoint GET de contratos
+│   ├── auth.php          # Classe Api — autenticação e resposta JSON
+│   ├── login.php         # LoginController — POST /api/login.php
+│   ├── imoveis.php       # ImoveisController — GET/POST /api/imoveis.php
+│   ├── clientes.php      # ClientesController — GET /api/clientes.php
+│   └── contratos.php     # ContratosController — GET /api/contratos.php
 ├── classes/
 │   ├── Imovel.php        # Modelo — propriedades do imóvel
 │   ├── ImovelDAO.php     # DAO — queries SQL de imóveis
@@ -50,7 +51,7 @@ imobtech/
 │   ├── UsuarioDAO.php    # DAO — login e cadastro
 │   └── JWT.php           # Geração e verificação de tokens
 ├── config/
-│   ├── database.php      # Instancia a conexão
+│   ├── database.php      # Classe Database — instancia a conexão
 │   └── env.php           # Carrega variáveis do .env
 ├── includes/
 │   ├── header.php        # Navbar reutilizável
@@ -71,8 +72,6 @@ imobtech/
 │   ├── novo.php
 │   ├── editar.php
 │   └── deletar.php
-├── uploads/              # Fotos dos imóveis
-│   └── .htaccess         # Bloqueia execução de scripts
 ├── index.php             # Página inicial
 ├── login.php             # Tela de login
 ├── cadastro.php          # Tela de cadastro
@@ -122,7 +121,7 @@ psql 'SUA_CONNECTION_STRING' -f banco.sql
 | cidade | VARCHAR(100) | Cidade |
 | bairro | VARCHAR(100) | Bairro |
 | status | VARCHAR(20) | disponivel, vendido, alugado |
-| foto | VARCHAR(255) | Nome do arquivo de foto |
+| foto | TEXT | Foto em base64 (data URI) |
 | criado_em | TIMESTAMP | Data de cadastro |
 
 #### `clientes`
@@ -180,7 +179,7 @@ class ImovelDAO {
     public function criar(Imovel $imovel) {
         $sql  = "INSERT INTO imoveis (titulo, valor, ...) VALUES (:titulo, :valor, ...)";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':titulo', $imovel->titulo); // acessa as propriedades do modelo
+        $stmt->bindParam(':titulo', $imovel->titulo);
         return $stmt->execute();
     }
 }
@@ -189,13 +188,13 @@ class ImovelDAO {
 ```php
 // Como as páginas usam o padrão DAO:
 $db  = new Database();
-$dao = new ImovelDAO($db->conectar()); // DAO recebe a conexão
+$dao = new ImovelDAO($db->conectar());
 
-$imovel        = new Imovel();         // modelo recebe os dados do formulário
+$imovel         = new Imovel();
 $imovel->titulo = $_POST['titulo'];
 $imovel->valor  = $_POST['valor'];
 
-$dao->criar($imovel); // DAO salva o modelo no banco
+$dao->criar($imovel);
 ```
 
 ---
@@ -205,53 +204,48 @@ $dao->criar($imovel); // DAO salva o modelo no banco
 ### `Database`
 Localização: `config/database.php`
 
-Responsável por abrir a conexão com o banco. Lê a `DATABASE_URL` do ambiente, extrai host, nome do banco, usuário e senha usando `parse_url()`, e cria uma conexão PDO com SSL obrigatório. Em caso de erro, registra no log do servidor e encerra — sem expor detalhes ao usuário.
+Responsável por abrir a conexão com o banco. Lê a `DATABASE_URL` do ambiente, extrai host, nome do banco, usuário e senha usando `parse_url()`, e cria uma conexão PDO com SSL obrigatório.
 
 ```php
-// Como é usado em todas as páginas:
-$db = new Database();
+$db   = new Database();
 $conn = $db->conectar(); // retorna o objeto PDO
-```
-
-```php
-// Trecho do código (config/database.php):
-$url    = parse_url(getenv('DATABASE_URL'));
-$dsn    = "pgsql:host={$url['host']};dbname=" . ltrim($url['path'], '/') . ";sslmode=require";
-$this->conn = new PDO($dsn, $url['user'], $url['pass']);
-$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 ```
 
 ---
 
-### `Imovel`
-Localização: `classes/Imovel.php`
+### `Api`
+Localização: `api/auth.php`
 
-Recebe a conexão PDO no construtor (injeção de dependência) e expõe métodos para cada operação no banco.
+Classe utilitária usada por todos os controllers da API. Centraliza a autenticação JWT e o envio de respostas JSON.
+
+| Método | Descrição |
+|---|---|
+| `autenticar()` | Valida o token JWT do header `Authorization: Bearer` — encerra com 401 se inválido |
+| `responder()` | Envia JSON com o código HTTP informado e encerra a execução |
+
+```php
+// Verifica o token e retorna o payload se válido:
+$usuario = Api::autenticar();
+
+// Envia resposta JSON:
+Api::responder(['mensagem' => 'ok'], 200);
+Api::responder(['erro' => 'não encontrado'], 404);
+```
+
+---
+
+### `Imovel` / `ImovelDAO`
+Localização: `classes/Imovel.php` e `classes/ImovelDAO.php`
 
 | Método | Descrição |
 |---|---|
 | `listar()` | Retorna todos os imóveis ordenados pelo mais recente |
 | `listarComCliente()` | JOIN com contratos e clientes — traz o nome do cliente vinculado |
-| `buscarPorId()` | Busca um imóvel pelo ID com LIMIT 1 |
-| `criar()` | Valida whitelist de tipo/finalidade, sanitiza campos e faz INSERT |
+| `buscarPorId()` | Busca um imóvel pelo ID |
+| `criar()` | Valida whitelist de tipo/finalidade e faz INSERT |
 | `atualizar()` | Valida whitelist de tipo/finalidade/status e faz UPDATE |
 | `atualizarStatus()` | UPDATE apenas do campo status — usado ao criar/excluir contratos |
 | `deletar()` | DELETE pelo ID |
-
-```php
-// Injeção de dependência no construtor:
-public function __construct($db) {
-    $this->conn = $db; // recebe a conexão pronta, não cria uma nova
-}
-```
-
-```php
-// Exemplo de validação por whitelist antes de salvar:
-$tiposValidos = ['casa', 'apartamento', 'chacara', 'terreno', 'sitio', 'empresarial'];
-if (!in_array($this->tipo, $tiposValidos)) {
-    return false; // rejeita qualquer valor fora da lista
-}
-```
 
 ```php
 // listarComCliente usa DISTINCT ON do PostgreSQL para
@@ -265,33 +259,21 @@ ORDER BY i.id DESC, c.id DESC
 
 ---
 
-### `Cliente`
-Localização: `classes/Cliente.php`
-
-Mesma estrutura da classe `Imovel`. Recebe a conexão no construtor e executa as operações via PDO com `bindParam()`.
+### `Cliente` / `ClienteDAO`
+Localização: `classes/Cliente.php` e `classes/ClienteDAO.php`
 
 | Método | Descrição |
 |---|---|
 | `listar()` | Retorna todos os clientes em ordem alfabética |
 | `buscarPorId()` | Busca um cliente pelo ID |
-| `criar()` | Sanitiza os campos e faz INSERT |
-| `atualizar()` | Sanitiza os campos e faz UPDATE |
-| `deletar()` | DELETE pelo ID |
-
-```php
-// Sanitização aplicada antes de salvar:
-$this->nome     = htmlspecialchars(strip_tags($this->nome));
-$this->cpf      = htmlspecialchars(strip_tags($this->cpf));
-$this->email    = htmlspecialchars(strip_tags($this->email));
-$this->telefone = htmlspecialchars(strip_tags($this->telefone));
-```
+| `criar()` | Insere um novo cliente |
+| `atualizar()` | Atualiza os dados de um cliente |
+| `deletar()` | Remove um cliente |
 
 ---
 
-### `Contrato`
-Localização: `classes/Contrato.php`
-
-Gerencia os contratos que vinculam imóvel a cliente. O método `listar()` usa JOIN para trazer os nomes relacionados em uma única query.
+### `Contrato` / `ContratoDAO`
+Localização: `classes/Contrato.php` e `classes/ContratoDAO.php`
 
 | Método | Descrição |
 |---|---|
@@ -301,45 +283,26 @@ Gerencia os contratos que vinculam imóvel a cliente. O método `listar()` usa J
 | `atualizar()` | Atualiza um contrato existente |
 | `deletar()` | Remove um contrato |
 
-```php
-// Query com JOIN para trazer dados relacionados:
-SELECT c.*, i.titulo as imovel_titulo, cl.nome as cliente_nome
-FROM contratos c
-JOIN imoveis i  ON c.imovel_id = i.id
-JOIN clientes cl ON c.cliente_id = cl.id
-ORDER BY c.id DESC
-```
-
-> Ao criar um contrato em `contratos/novo.php`, o código chama `$imovel->atualizarStatus()` automaticamente para mudar o imóvel para `alugado` ou `vendido`. Ao excluir, volta para `disponivel`.
-
-```php
-// Em contratos/novo.php, após criar o contrato:
-$imovel->id     = $_POST['imovel_id'];
-$imovel->status = $_POST['tipo'] === 'aluguel' ? 'alugado' : 'vendido';
-$imovel->atualizarStatus();
-```
+> Ao criar um contrato, o status do imóvel é atualizado automaticamente para `alugado` ou `vendido`. Ao excluir, volta para `disponivel`.
 
 ---
 
-### `Usuario`
-Localização: `classes/Usuario.php`
-
-Gerencia autenticação. A senha nunca é salva em texto puro — o PHP gera um hash bcrypt automaticamente com `password_hash()`, e a verificação é feita com `password_verify()` que compara de forma segura.
+### `Usuario` / `UsuarioDAO`
+Localização: `classes/Usuario.php` e `classes/UsuarioDAO.php`
 
 | Método | Descrição |
 |---|---|
 | `login()` | Busca o usuário pelo nome e verifica a senha com `password_verify()` |
-| `cadastrar()` | Gera hash bcrypt da senha e faz INSERT |
-| `usuarioExiste()` | SELECT com LIMIT 1 para checar duplicidade antes de cadastrar |
+| `criar()` | Gera hash bcrypt da senha e faz INSERT |
+| `usuarioExiste()` | Verifica duplicidade antes de cadastrar |
 
 ```php
-// Cadastro — senha nunca é salva em texto puro:
-$hash = password_hash($this->senha, PASSWORD_DEFAULT); // gera hash bcrypt
-$stmt->bindParam(':senha', $hash); // salva o hash no banco
+// Senha nunca salva em texto puro:
+$hash = password_hash($usuario->senha, PASSWORD_DEFAULT);
 
-// Login — compara senha digitada com o hash do banco:
-if ($row && password_verify($this->senha, $row['senha'])) {
-    return $row; // autenticado
+// Verificação no login:
+if ($row && password_verify($usuario->senha, $row['senha'])) {
+    return $row;
 }
 ```
 
@@ -348,7 +311,7 @@ if ($row && password_verify($this->senha, $row['senha'])) {
 ### `JWT`
 Localização: `classes/JWT.php`
 
-Implementação manual do padrão JWT sem dependências externas. O token é composto por três partes em Base64URL separadas por ponto: `header.payload.assinatura`.
+Implementação manual do padrão JWT sem dependências externas.
 
 | Método | Descrição |
 |---|---|
@@ -356,37 +319,29 @@ Implementação manual do padrão JWT sem dependências externas. O token é com
 | `verificar($token, $secret)` | Valida assinatura e expiração, retorna o payload |
 
 ```php
-// Geração do token — três partes unidas por ponto:
-$header  = base64url( json_encode(['alg' => 'HS256', 'typ' => 'JWT']) );
-$body    = base64url( json_encode($payload) ); // ex: {id:1, nome:"João", exp:...}
-$sig     = base64url( hash_hmac('sha256', "$header.$body", $secret, true) );
+$header = base64url( json_encode(['alg' => 'HS256', 'typ' => 'JWT']) );
+$body   = base64url( json_encode($payload) );
+$sig    = base64url( hash_hmac('sha256', "$header.$body", $secret, true) );
 return "$header.$body.$sig";
-
-// Verificação — recalcula a assinatura e compara:
-$sigEsperada = base64url( hash_hmac('sha256', "$header.$body", $secret, true) );
-if (!hash_equals($sigEsperada, $sig)) return false; // assinatura inválida
-
-// Verifica expiração:
-if ($dados['exp'] < time()) return false; // token vencido
 ```
 
-O token expira em 8 horas. Após isso, o usuário é redirecionado para o login automaticamente.
+O token expira em 8 horas.
 
 ---
 
 ## Autenticação
 
-O sistema usa JWT armazenado em cookie `httpOnly`. Não utiliza `session_start()`, garantindo compatibilidade com ambientes serverless como a Vercel, onde cada requisição pode ser processada por uma instância diferente do servidor.
+O sistema usa JWT armazenado em cookie `httpOnly`. Não utiliza `session_start()`, garantindo compatibilidade com ambientes serverless como a Vercel.
 
 ### Fluxo completo de login
 
 ```
 1. Usuário preenche usuário + senha e envia o formulário (POST)
-2. login.php instancia Usuario e chama $usuario->login()
-3. A classe busca o usuário no banco pelo nome de login
+2. login.php instancia Usuario e chama $dao->login()
+3. UsuarioDAO busca o usuário no banco pelo nome de login
 4. password_verify() compara a senha digitada com o hash bcrypt salvo
 5. Se válido, JWT::gerar() cria um token com {id, nome, exp: agora + 8h}
-6. setcookie() salva o token no cookie 'token' com httpOnly e SameSite=Strict
+6. setcookie() salva o token com httpOnly e SameSite=Strict
 7. Redireciona para index.php
 8. Em cada página, includes/auth.php lê o cookie e chama JWT::verificar()
 9. Se inválido ou expirado, redireciona para login.php
@@ -396,15 +351,13 @@ O sistema usa JWT armazenado em cookie `httpOnly`. Não utiliza `session_start()
 
 ```php
 // includes/auth.php — incluído no topo de cada página protegida:
-$token         = $_COOKIE['token'] ?? '';
+$token          = $_COOKIE['token'] ?? '';
 $usuario_logado = JWT::verificar($token, getenv('JWT_SECRET'));
 
 if (!$usuario_logado) {
     header('Location: /login.php');
-    exit; // para a execução imediatamente
+    exit;
 }
-// Se chegou aqui, o usuário está autenticado.
-// $usuario_logado contém {id, nome} disponível para a página.
 ```
 
 ---
@@ -434,14 +387,36 @@ if (!$usuario_logado) {
 
 ## API REST
 
-Todos os endpoints exigem autenticação via header `Authorization: Bearer <token>`.
+Todos os endpoints (exceto `/api/login.php`) exigem autenticação via header `Authorization: Bearer <token>`.
 
-O token é o mesmo JWT gerado no login (visível no cookie `token` do navegador).
+Cada endpoint é implementado como uma **classe controller** em OOP.
 
 ### Endpoints
 
+#### `POST /api/login.php`
+Autentica o usuário e retorna o token JWT.
+
+```bash
+curl -X POST http://localhost:8000/api/login.php \
+  -H "Content-Type: application/json" \
+  -d '{"usuario": "admin", "senha": "123456"}'
+```
+
+Resposta:
+```json
+{"token": "eyJ...", "nome": "Admin"}
+```
+
+Erros:
+```json
+{"erro": "Usuário ou senha inválidos."}
+{"erro": "Os campos usuario e senha são obrigatórios."}
+```
+
+---
+
 #### `GET /api/imoveis.php`
-Retorna lista de imóveis em JSON.
+Retorna lista de imóveis com nome do cliente vinculado.
 
 ```bash
 curl -H "Authorization: Bearer SEU_TOKEN" http://localhost:8000/api/imoveis.php
@@ -495,10 +470,12 @@ Valores válidos para `tipo`: `casa`, `apartamento`, `chacara`, `terreno`, `siti
 
 Valores válidos para `finalidade`: `alugar`, `comprar`, `financiamento`
 
+Campos obrigatórios: `tipo`, `finalidade`, `titulo`, `cidade`
+
 ---
 
 #### `GET /api/clientes.php`
-Retorna lista de clientes em JSON.
+Retorna lista de clientes.
 
 ```bash
 curl -H "Authorization: Bearer SEU_TOKEN" http://localhost:8000/api/clientes.php
@@ -515,12 +492,17 @@ curl -H "Authorization: Bearer SEU_TOKEN" http://localhost:8000/api/contratos.ph
 
 ---
 
-### Erros de autenticação
+### Códigos de resposta
 
-```json
-{"erro": "Token não fornecido."}
-{"erro": "Token inválido ou expirado."}
-```
+| Código | Situação |
+|---|---|
+| 200 | Sucesso |
+| 201 | Recurso criado |
+| 400 | JSON inválido ou ausente |
+| 401 | Token ausente, inválido ou expirado |
+| 405 | Método HTTP não permitido |
+| 422 | Dados inválidos (campo obrigatório vazio ou valor fora da whitelist) |
+| 500 | Erro interno do servidor |
 
 ---
 
@@ -529,67 +511,52 @@ curl -H "Authorization: Bearer SEU_TOKEN" http://localhost:8000/api/contratos.ph
 | Proteção | Como é feita |
 |---|---|
 | SQL Injection | PDO com `prepare()` + `bindParam()` em todas as queries |
-| XSS | `strip_tags()` na entrada, `htmlspecialchars()` na saída |
+| XSS | `htmlspecialchars()` na exibição de todos os dados no HTML |
 | PHP Injection via upload | `getimagesize()` valida o conteúdo real do arquivo |
 | Manipulação de ID | Todos os IDs recebem cast `(int)` antes de qualquer uso |
 | Valores inválidos | `tipo`, `finalidade` e `status` validados contra whitelist |
-| Execução de script em uploads | `.htaccess` bloqueia PHP na pasta `/uploads` |
 | Erros do banco | Erros do PDO vão para `error_log`, nunca exibidos ao usuário |
 | Senhas | Hash bcrypt com `password_hash()` + verificação com `password_verify()` |
 | Autenticação | JWT HS256, cookie `httpOnly`, `SameSite=Strict`, expira em 8h |
+| Timing attack | `hash_equals()` na comparação de assinaturas JWT |
 
 ### SQL Injection
 
-Todas as queries usam `prepare()` + `bindParam()`. O PDO separa o SQL dos dados — o banco recebe os dois separadamente e nunca interpreta o dado como código.
-
 ```php
-// VULNERÁVEL (concatenação direta — NUNCA fazer):
+// VULNERÁVEL (concatenação direta):
 $sql = "SELECT * FROM usuarios WHERE usuario = '$usuario'";
-// Se $usuario for: ' OR '1'='1  →  retorna todos os usuários
 
 // CORRETO (PDO com bindParam):
 $sql = "SELECT * FROM usuarios WHERE usuario = :usuario";
 $stmt = $this->conn->prepare($sql);
-$stmt->bindParam(':usuario', $this->usuario); // dado tratado como texto puro
+$stmt->bindParam(':usuario', $usuario->usuario);
 $stmt->execute();
 ```
 
 ### XSS (Cross-Site Scripting)
 
-```php
-// Na entrada (ao salvar no banco):
-$this->titulo = htmlspecialchars(strip_tags($this->titulo));
-// strip_tags remove: <script>alert(1)</script>  →  alert(1)
-// htmlspecialchars converte: <b>texto</b>  →  &lt;b&gt;texto&lt;/b&gt;
+Os dados são armazenados no banco como estão e escapados somente na exibição:
 
-// Na saída (ao exibir no HTML):
+```php
+// Na exibição (templates HTML):
 echo htmlspecialchars($row['titulo']);
-// Garante que mesmo dados já no banco não executem como HTML
+echo htmlspecialchars($row['nome']);
 ```
 
 ### PHP Injection via Upload
 
 ```php
-// Verifica os bytes reais do arquivo, não apenas a extensão:
 $imagemInfo = @getimagesize($_FILES['foto']['tmp_name']);
-
-// Um arquivo PHP renomeado para .jpg não tem assinatura de imagem
-// getimagesize() retorna false → upload rejeitado
 if ($imagemInfo && in_array($imagemInfo['mime'], ['image/jpeg', 'image/png', 'image/webp'])) {
-    // só aqui o arquivo é salvo
+    // arquivo válido
 }
 ```
 
 ### Manipulação de ID
 
 ```php
-// Sem cast — vulnerável a strings maliciosas na URL:
-// ?id=1 OR 1=1  poderia causar comportamento inesperado
-$imovel->id = $_GET['id'];
-
-// Com cast para inteiro — qualquer coisa vira número:
+$id = (int)($_GET['id'] ?? 0);
 // ?id=1 OR 1=1  →  (int) = 1
-$imovel->id = (int)($_GET['id'] ?? 0);
 ```
 
 ---
@@ -605,7 +572,7 @@ $imovel->id = (int)($_GET['id'] ?? 0);
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/seu-usuario/imobtech.git
+git clone https://github.com/LucasPierreAraujo/imobtech.git
 cd imobtech
 
 # 2. Instale a extensão PHP para PostgreSQL (Ubuntu/Debian)
@@ -639,6 +606,6 @@ npm i -g vercel
 vercel
 ```
 
-No painel da Vercel → **Settings → Environment Variables**, adicione `DATABASE_URL` e `JWT_SECRET` com os mesmos valores do `.env` local.
+No painel da Vercel → **Settings → Environment Variables**, adicione `DATABASE_URL` e `JWT_SECRET`.
 
 Acesso: imobtech-delta.vercel.app
