@@ -37,9 +37,17 @@ CREATE TABLE contratos (
     imovel_id INT NOT NULL REFERENCES imoveis(id),
     cliente_id INT NOT NULL REFERENCES clientes(id),
     tipo VARCHAR(20) NOT NULL,
+    forma_pagamento VARCHAR(20),
+    valor_entrada NUMERIC(15,2) DEFAULT 0,
+    valor_parcela NUMERIC(15,2) DEFAULT 0,
     valor_total NUMERIC(15,2) NOT NULL,
     parcelas INT DEFAULT 1,
     data_inicio DATE,
     data_fim DATE,
     criado_em TIMESTAMP DEFAULT NOW()
 );
+
+-- Migração para banco existente:
+-- ALTER TABLE contratos ADD COLUMN IF NOT EXISTS forma_pagamento VARCHAR(20);
+-- ALTER TABLE contratos ADD COLUMN IF NOT EXISTS valor_entrada NUMERIC(15,2) DEFAULT 0;
+-- ALTER TABLE contratos ADD COLUMN IF NOT EXISTS valor_parcela NUMERIC(15,2) DEFAULT 0;

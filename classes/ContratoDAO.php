@@ -32,33 +32,44 @@ class ContratoDAO {
     }
 
     public function criar(Contrato $contrato) {
-        $sql = "INSERT INTO {$this->tabela} (imovel_id, cliente_id, tipo, valor_total, parcelas, data_inicio, data_fim)
-                VALUES (:imovel_id, :cliente_id, :tipo, :valor_total, :parcelas, :data_inicio, :data_fim)";
+        $sql = "INSERT INTO {$this->tabela}
+                    (imovel_id, cliente_id, tipo, forma_pagamento, valor_entrada, valor_parcela, valor_total, parcelas, data_inicio, data_fim)
+                VALUES
+                    (:imovel_id, :cliente_id, :tipo, :forma_pagamento, :valor_entrada, :valor_parcela, :valor_total, :parcelas, :data_inicio, :data_fim)";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':imovel_id',   $contrato->imovel_id);
-        $stmt->bindParam(':cliente_id',  $contrato->cliente_id);
-        $stmt->bindParam(':tipo',        $contrato->tipo);
-        $stmt->bindParam(':valor_total', $contrato->valor_total);
-        $stmt->bindParam(':parcelas',    $contrato->parcelas);
-        $stmt->bindParam(':data_inicio', $contrato->data_inicio);
-        $stmt->bindParam(':data_fim',    $contrato->data_fim);
+        $stmt->bindParam(':imovel_id',       $contrato->imovel_id);
+        $stmt->bindParam(':cliente_id',      $contrato->cliente_id);
+        $stmt->bindParam(':tipo',            $contrato->tipo);
+        $stmt->bindParam(':forma_pagamento', $contrato->forma_pagamento);
+        $stmt->bindParam(':valor_entrada',   $contrato->valor_entrada);
+        $stmt->bindParam(':valor_parcela',   $contrato->valor_parcela);
+        $stmt->bindParam(':valor_total',     $contrato->valor_total);
+        $stmt->bindParam(':parcelas',        $contrato->parcelas);
+        $stmt->bindParam(':data_inicio',     $contrato->data_inicio);
+        $stmt->bindParam(':data_fim',        $contrato->data_fim);
         return $stmt->execute();
     }
 
     public function atualizar(Contrato $contrato) {
         $id  = (int)$contrato->id;
-        $sql = "UPDATE {$this->tabela} SET imovel_id=:imovel_id, cliente_id=:cliente_id, tipo=:tipo,
-                valor_total=:valor_total, parcelas=:parcelas, data_inicio=:data_inicio, data_fim=:data_fim
+        $sql = "UPDATE {$this->tabela} SET
+                    imovel_id=:imovel_id, cliente_id=:cliente_id, tipo=:tipo,
+                    forma_pagamento=:forma_pagamento, valor_entrada=:valor_entrada,
+                    valor_parcela=:valor_parcela, valor_total=:valor_total,
+                    parcelas=:parcelas, data_inicio=:data_inicio, data_fim=:data_fim
                 WHERE id=:id";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindParam(':imovel_id',   $contrato->imovel_id);
-        $stmt->bindParam(':cliente_id',  $contrato->cliente_id);
-        $stmt->bindParam(':tipo',        $contrato->tipo);
-        $stmt->bindParam(':valor_total', $contrato->valor_total);
-        $stmt->bindParam(':parcelas',    $contrato->parcelas);
-        $stmt->bindParam(':data_inicio', $contrato->data_inicio);
-        $stmt->bindParam(':data_fim',    $contrato->data_fim);
-        $stmt->bindParam(':id',          $id);
+        $stmt->bindParam(':imovel_id',       $contrato->imovel_id);
+        $stmt->bindParam(':cliente_id',      $contrato->cliente_id);
+        $stmt->bindParam(':tipo',            $contrato->tipo);
+        $stmt->bindParam(':forma_pagamento', $contrato->forma_pagamento);
+        $stmt->bindParam(':valor_entrada',   $contrato->valor_entrada);
+        $stmt->bindParam(':valor_parcela',   $contrato->valor_parcela);
+        $stmt->bindParam(':valor_total',     $contrato->valor_total);
+        $stmt->bindParam(':parcelas',        $contrato->parcelas);
+        $stmt->bindParam(':data_inicio',     $contrato->data_inicio);
+        $stmt->bindParam(':data_fim',        $contrato->data_fim);
+        $stmt->bindParam(':id',              $id);
         return $stmt->execute();
     }
 
