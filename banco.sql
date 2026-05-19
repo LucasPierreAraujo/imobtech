@@ -40,6 +40,7 @@ CREATE TABLE contratos (
     forma_pagamento VARCHAR(20),
     valor_entrada NUMERIC(15,2) DEFAULT 0,
     valor_parcela NUMERIC(15,2) DEFAULT 0,
+    calcao NUMERIC(15,2) DEFAULT 0,
     valor_total NUMERIC(15,2) NOT NULL,
     parcelas INT DEFAULT 1,
     data_inicio DATE,
@@ -51,3 +52,4 @@ CREATE TABLE contratos (
 -- ALTER TABLE contratos ADD COLUMN IF NOT EXISTS forma_pagamento VARCHAR(20);
 -- ALTER TABLE contratos ADD COLUMN IF NOT EXISTS valor_entrada NUMERIC(15,2) DEFAULT 0;
 -- ALTER TABLE contratos ADD COLUMN IF NOT EXISTS valor_parcela NUMERIC(15,2) DEFAULT 0;
+-- ALTER TABLE contratos ADD COLUMN IF NOT EXISTS calcao NUMERIC(15,2) DEFAULT 0;

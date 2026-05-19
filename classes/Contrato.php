@@ -7,6 +7,7 @@ class Contrato {
     public $forma_pagamento;
     public $valor_entrada;
     public $valor_parcela;
+    public $calcao;
     public $valor_total;
     public $parcelas;
     public $data_inicio;

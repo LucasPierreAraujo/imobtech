@@ -14,42 +14,48 @@ $imovelDAO   = new ImovelDAO($conn);
 $clienteDAO  = new ClienteDAO($conn);
 $contratoDAO = new ContratoDAO($conn);
 
-$imoveis  = $imovelDAO->listar();
-$clientes = $clienteDAO->listar();
-$erro     = '';
+$todosImoveis = $imovelDAO->listar()->fetchAll(PDO::FETCH_ASSOC);
+$clientes     = $clienteDAO->listar()->fetchAll(PDO::FETCH_ASSOC);
+$erro         = '';
+
+$calcMeses = function($inicio, $fim) {
+    if (!$inicio || !$fim) return 0;
+    $d1 = new DateTime($inicio);
+    $d2 = new DateTime($fim);
+    $m  = ($d2->format('Y') - $d1->format('Y')) * 12 + ($d2->format('m') - $d1->format('m'));
+    return max(0, $m);
+};
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $tipo            = $_POST['tipo'] ?? '';
+    $dataInicio      = $_POST['data_inicio'] ?? '';
+    $dataFim         = $_POST['data_fim'] ?? '';
     $forma_pagamento = null;
     $valor_entrada   = 0;
     $valor_parcela   = 0;
+    $calcao          = 0;
     $parcelas        = 1;
     $valor_total     = 0;
 
     switch ($tipo) {
         case 'aluguel':
             $valor_parcela = abs((float)($_POST['aluguel_mensal'] ?? 0));
-            $parcelas      = abs((int)($_POST['aluguel_meses'] ?? 0));
+            $parcelas      = $calcMeses($dataInicio, $dataFim) ?: abs((int)($_POST['aluguel_meses'] ?? 0));
+            $calcao        = $valor_parcela * 2;
             $valor_total   = $valor_parcela * $parcelas;
             break;
 
         case 'compra':
             $forma_pagamento = $_POST['forma_pagamento'] ?? '';
-            if ($forma_pagamento === 'cartao_credito') {
-                $valor_parcela = abs((float)($_POST['compra_valor_parcela'] ?? 0));
-                $parcelas      = abs((int)($_POST['compra_parcelas'] ?? 0));
-                $valor_total   = $valor_parcela * $parcelas;
-            } else {
-                $valor_total   = abs((float)($_POST['compra_valor'] ?? 0));
-                $parcelas      = 1;
-                $valor_parcela = $valor_total;
-            }
+            $valor_total     = abs((float)($_POST['compra_valor'] ?? 0));
+            $parcelas        = 1;
+            $valor_parcela   = $valor_total;
             break;
 
         case 'financiamento':
             $valor_entrada = abs((float)($_POST['fin_entrada'] ?? 0));
             $valor_parcela = abs((float)($_POST['fin_valor_parcela'] ?? 0));
-            $parcelas      = abs((int)($_POST['fin_parcelas'] ?? 0));
+            $parcelas      = $calcMeses($dataInicio, $dataFim) ?: abs((int)($_POST['fin_parcelas'] ?? 0));
             $valor_total   = $valor_entrada + ($valor_parcela * $parcelas);
             break;
     }
@@ -61,10 +67,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $contrato->forma_pagamento = $forma_pagamento;
     $contrato->valor_entrada   = $valor_entrada;
     $contrato->valor_parcela   = $valor_parcela;
+    $contrato->calcao          = $calcao;
     $contrato->parcelas        = $parcelas;
     $contrato->valor_total     = $valor_total;
-    $contrato->data_inicio     = $_POST['data_inicio'];
-    $contrato->data_fim        = $_POST['data_fim'];
+    $contrato->data_inicio     = $dataInicio;
+    $contrato->data_fim        = $dataFim;
 
     if ($contratoDAO->criar($contrato)) {
         $novoStatus = $tipo === 'aluguel' ? 'alugado' : 'vendido';
@@ -74,6 +81,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         $erro = 'Erro ao cadastrar contrato.';
     }
+}
+
+$precos = [];
+foreach ($todosImoveis as $im) {
+    $precos[$im['id']] = (float)$im['valor'];
 }
 ?>
 <?php include __DIR__ . '/../includes/header.php'; ?>
@@ -90,20 +102,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label>Imóvel</label>
-                    <select name="imovel_id" class="form-select" required>
+                    <select name="imovel_id" id="imovel_id" class="form-select" required onchange="preencherValor()">
                         <option value="">Selecione um imóvel</option>
-                        <?php while ($i = $imoveis->fetch(PDO::FETCH_ASSOC)): ?>
+                        <?php foreach ($todosImoveis as $i): ?>
                         <option value="<?= $i['id'] ?>"><?= htmlspecialchars($i['titulo']) ?> (<?= ucfirst($i['tipo']) ?>)</option>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label>Cliente</label>
                     <select name="cliente_id" class="form-select" required>
                         <option value="">Selecione um cliente</option>
-                        <?php while ($c = $clientes->fetch(PDO::FETCH_ASSOC)): ?>
+                        <?php foreach ($clientes as $c): ?>
                         <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['nome']) ?></option>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     </select>
                 </div>
             </div>
@@ -120,73 +132,64 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
                 <div class="col-md-4 mb-3">
                     <label>Data de Início</label>
-                    <input type="date" name="data_inicio" class="form-control">
+                    <input type="date" name="data_inicio" id="data_inicio" class="form-control" oninput="onDatasChange()">
                 </div>
                 <div class="col-md-4 mb-3">
                     <label>Data de Fim</label>
-                    <input type="date" name="data_fim" class="form-control">
+                    <input type="date" name="data_fim" id="data_fim" class="form-control" oninput="onDatasChange()">
                 </div>
             </div>
 
+            <!-- Aluguel -->
             <div id="section-aluguel" style="display:none">
                 <hr>
                 <div class="row">
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3 mb-3">
                         <label>Valor mensal (R$)</label>
-                        <input type="number" step="0.01" id="aluguel_mensal" name="aluguel_mensal" class="form-control" min="0" oninput="calcular()">
+                        <input type="number" step="0.01" id="aluguel_mensal" name="aluguel_mensal" class="form-control" readonly>
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3 mb-3">
                         <label>Número de meses</label>
                         <input type="number" id="aluguel_meses" name="aluguel_meses" class="form-control" min="1" oninput="calcular()">
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <label>Total a pagar</label>
+                    <div class="col-md-3 mb-3">
+                        <label>Calção (2 meses adiantado)</label>
+                        <div class="form-control bg-light fw-bold" id="display-calcao">R$ 0,00</div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>Valor total até o final do contrato</label>
                         <div class="form-control bg-light fw-bold text-success" id="total-aluguel">R$ 0,00</div>
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>Multa contratual</label>
+                        <div class="form-control bg-light text-danger fw-bold" id="display-multa">R$ 0,00</div>
+                        <small class="text-muted">Valor a pagar caso rescinda antes do fim do contrato</small>
+                    </div>
+                </div>
             </div>
 
+            <!-- Compra -->
             <div id="section-compra" style="display:none">
                 <hr>
                 <div class="row">
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-6 mb-3">
                         <label>Forma de Pagamento</label>
-                        <select name="forma_pagamento" id="forma_pagamento" class="form-select" onchange="atualizarFormaPagamento()">
+                        <select name="forma_pagamento" id="forma_pagamento" class="form-select">
                             <option value="dinheiro">Dinheiro</option>
                             <option value="debito">Débito</option>
                             <option value="pix">Pix</option>
-                            <option value="cartao_credito">Cartão de Crédito</option>
                         </select>
                     </div>
-                </div>
-
-                <div id="section-avista">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label>Valor (R$)</label>
-                            <input type="number" step="0.01" id="compra_valor" name="compra_valor" class="form-control" min="0" oninput="calcular()">
-                        </div>
-                    </div>
-                </div>
-
-                <div id="section-parcelado" style="display:none">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label>Número de parcelas</label>
-                            <input type="number" id="compra_parcelas" name="compra_parcelas" class="form-control" min="1" oninput="calcular()">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label>Valor da parcela (R$)</label>
-                            <input type="number" step="0.01" id="compra_valor_parcela" name="compra_valor_parcela" class="form-control" min="0" oninput="calcular()">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label>Total a pagar</label>
-                            <div class="form-control bg-light fw-bold text-success" id="total-parcelado">R$ 0,00</div>
-                        </div>
+                    <div class="col-md-6 mb-3">
+                        <label>Valor (R$)</label>
+                        <input type="number" step="0.01" id="compra_valor" name="compra_valor" class="form-control" readonly>
                     </div>
                 </div>
             </div>
 
+            <!-- Financiamento -->
             <div id="section-financiamento" style="display:none">
                 <hr>
                 <div class="row">
@@ -196,7 +199,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </div>
                     <div class="col-md-3 mb-3">
                         <label>Número de parcelas</label>
-                        <input type="number" id="fin_parcelas" name="fin_parcelas" class="form-control" min="1" oninput="calcular()">
+                        <input type="number" id="fin_parcelas" name="fin_parcelas" class="form-control" readonly>
+                        <small id="info-parcelas" class="text-muted"></small>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label>Valor da parcela (R$)</label>
@@ -216,8 +220,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </div>
 
 <script>
+const precos = <?= json_encode($precos) ?>;
+
 function fmt(v) {
     return 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function mesesEntreDatas() {
+    const inicio = document.getElementById('data_inicio').value;
+    const fim    = document.getElementById('data_fim').value;
+    if (!inicio || !fim) return 0;
+    const d1 = new Date(inicio);
+    const d2 = new Date(fim);
+    const m  = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+    return m > 0 ? m : 0;
+}
+
+function preencherValor() {
+    const id    = document.getElementById('imovel_id').value;
+    const preco = precos[id] || 0;
+    document.getElementById('aluguel_mensal').value = preco ? preco.toFixed(2) : '';
+    document.getElementById('compra_valor').value   = preco ? preco.toFixed(2) : '';
+    calcular();
 }
 
 function atualizarTipo() {
@@ -225,13 +249,22 @@ function atualizarTipo() {
     document.getElementById('section-aluguel').style.display       = tipo === 'aluguel'       ? '' : 'none';
     document.getElementById('section-compra').style.display        = tipo === 'compra'        ? '' : 'none';
     document.getElementById('section-financiamento').style.display = tipo === 'financiamento' ? '' : 'none';
-    calcular();
+    preencherValor();
 }
 
-function atualizarFormaPagamento() {
-    const parcelado = document.getElementById('forma_pagamento').value === 'cartao_credito';
-    document.getElementById('section-avista').style.display    = parcelado ? 'none' : '';
-    document.getElementById('section-parcelado').style.display = parcelado ? '' : 'none';
+function onDatasChange() {
+    const meses = mesesEntreDatas();
+    const tipo  = document.getElementById('tipo').value;
+
+    if (tipo === 'aluguel' && meses > 0) {
+        document.getElementById('aluguel_meses').value = meses;
+    }
+    if (tipo === 'financiamento') {
+        document.getElementById('fin_parcelas').value = meses || '';
+        document.getElementById('info-parcelas').textContent = meses > 0
+            ? meses + ' parcelas calculadas pelas datas.'
+            : '';
+    }
     calcular();
 }
 
@@ -240,19 +273,16 @@ function calcular() {
 
     if (tipo === 'aluguel') {
         const mensal = parseFloat(document.getElementById('aluguel_mensal').value) || 0;
-        const meses  = parseInt(document.getElementById('aluguel_meses').value)    || 0;
-        document.getElementById('total-aluguel').textContent = fmt(mensal * meses);
-
-    } else if (tipo === 'compra') {
-        if (document.getElementById('forma_pagamento').value === 'cartao_credito') {
-            const parc = parseInt(document.getElementById('compra_parcelas').value)       || 0;
-            const val  = parseFloat(document.getElementById('compra_valor_parcela').value) || 0;
-            document.getElementById('total-parcelado').textContent = fmt(parc * val);
-        }
+        const meses  = parseInt(document.getElementById('aluguel_meses').value) || 0;
+        const total  = mensal * meses;
+        const calcao = mensal * 2;
+        document.getElementById('total-aluguel').textContent  = fmt(total);
+        document.getElementById('display-calcao').textContent = fmt(calcao);
+        document.getElementById('display-multa').textContent  = fmt(total);
 
     } else if (tipo === 'financiamento') {
-        const entrada = parseFloat(document.getElementById('fin_entrada').value)       || 0;
-        const parc    = parseInt(document.getElementById('fin_parcelas').value)        || 0;
+        const entrada = parseFloat(document.getElementById('fin_entrada').value) || 0;
+        const parc    = parseInt(document.getElementById('fin_parcelas').value) || 0;
         const val     = parseFloat(document.getElementById('fin_valor_parcela').value) || 0;
         document.getElementById('total-financiamento').textContent = fmt(entrada + (parc * val));
     }
