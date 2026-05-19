@@ -314,7 +314,7 @@ function calcular() {
         const total  = mensal * meses;
         document.getElementById('total-aluguel').textContent  = fmt(total);
         document.getElementById('display-calcao').textContent = fmt(mensal * 2);
-        document.getElementById('display-multa').textContent  = fmt(total);
+        document.getElementById('display-multa').textContent  = fmt(mensal * 4);
 
     } else if (tipo === 'financiamento') {
         const entrada = parseFloat(document.getElementById('fin_entrada').value) || 0;
